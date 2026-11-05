@@ -10,6 +10,7 @@ import {
   type ProjectDocument,
 } from "@haizhu/canvas-core";
 import type { NodeDefinition } from "@haizhu/node-sdk";
+import type { RunSnapshot } from "@/lib/engine-client";
 import type { AgentFlowNode, MeasuredSize } from "@/lib/flow-graph";
 
 const HISTORY_LIMIT = 50;
@@ -39,6 +40,8 @@ type CanvasState = {
   loadProject: (document: ProjectDocument) => void;
   setNotice: (notice: CanvasNotice | null) => void;
   alignAssetsDirectory: (directory: string) => void;
+  updateNodeData: (nodeId: string, patch: Record<string, unknown>, recordHistory: boolean) => void;
+  applyRunResult: (run: RunSnapshot) => void;
 };
 
 function snapshot(project: ProjectDocument): ProjectDocument {
@@ -48,20 +51,29 @@ function snapshot(project: ProjectDocument): ProjectDocument {
 function gridPosition(index: number): { x: number; y: number } {
   const column = index % 3;
   const row = Math.floor(index / 3);
-  return { x: 48 + column * 260, y: 48 + row * 180 };
+  return { x: 48 + column * 380, y: 64 + row * 220 };
 }
 
 function nodeFromDefinition(
   definition: NodeDefinition,
   position: { x: number; y: number },
 ): GraphNode {
+  const data: Record<string, unknown> = { label: definition.title };
+  for (const field of definition.fields) {
+    if (field.default !== undefined) data[field.key] = field.default;
+  }
   return {
     id: `node-${crypto.randomUUID()}`,
     type: definition.type,
     position,
-    data: { label: definition.title },
+    data,
     ports: definition.ports.map((port) => ({ ...port })),
   };
+}
+
+function assetIdFor(runId: string, nodeId: string): string {
+  const raw = `asset-${runId}-${nodeId}`.replace(/[^A-Za-z0-9_-]/g, "");
+  return (raw || "asset-run").slice(0, 200);
 }
 
 function withSelection(
@@ -364,6 +376,99 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
       selectedNodeIds: [],
       selectedEdgeIds: [],
       notice: null,
+    });
+  },
+
+  updateNodeData: (nodeId, patch, recordHistory) => {
+    set((state) => {
+      const current = state.project;
+      if (!current.graph.nodes.some((node) => node.id === nodeId)) return {};
+      const nodes = current.graph.nodes.map((node) => {
+        if (node.id !== nodeId) return node;
+        const data: Record<string, unknown> = { ...node.data };
+        for (const [key, value] of Object.entries(patch)) {
+          if (value === undefined) delete data[key];
+          else data[key] = value;
+        }
+        return { ...node, data };
+      });
+      const next: ProjectDocument = {
+        ...current,
+        graph: { ...current.graph, nodes },
+      };
+      const parsed = validateProjectDocument(next);
+      if (!parsed.success) {
+        return { notice: { tone: "error" as const, text: formatIssues(parsed.issues) } };
+      }
+      if (JSON.stringify(parsed.data) === JSON.stringify(current)) return {};
+      lastRemovalAt = 0;
+      return {
+        project: parsed.data,
+        past: recordHistory ? [...state.past, snapshot(current)].slice(-HISTORY_LIMIT) : state.past,
+        future: recordHistory ? [] : state.future,
+        dragSnapshotTaken: false,
+        notice: null,
+      };
+    });
+  },
+
+  applyRunResult: (run) => {
+    set((state) => {
+      const current = state.project;
+      let entries = current.assets.entries;
+      let changedEntries = false;
+      const nodes = current.graph.nodes.map((node) => {
+        const result = run.nodes[node.id];
+        if (!result || result.status !== "succeeded") return node;
+        const output: Record<string, unknown> = {};
+        if (typeof result.outputs.text === "string") output.text = result.outputs.text;
+        const image = result.outputs.image;
+        if (image && image.relativePath) {
+          output.image = {
+            relativePath: image.relativePath,
+            mediaType: image.mediaType || "image/png",
+          };
+          if (!entries.some((entry) => entry.relativePath === image.relativePath)) {
+            entries = [
+              ...entries,
+              {
+                id: assetIdFor(run.id, node.id),
+                relativePath: image.relativePath,
+                kind: "image" as const,
+                mediaType: image.mediaType || "image/png",
+              },
+            ];
+            changedEntries = true;
+          }
+        }
+        if (Object.keys(output).length === 0) return node;
+        return { ...node, data: { ...node.data, output } };
+      });
+      if (!changedEntries && nodes.every((node, index) => node === current.graph.nodes[index])) {
+        return {};
+      }
+      const next: ProjectDocument = {
+        ...current,
+        graph: { ...current.graph, nodes },
+        assets: { ...current.assets, entries },
+      };
+      const parsed = validateProjectDocument(next);
+      if (!parsed.success) {
+        return {
+          notice: {
+            tone: "error" as const,
+            text: `运行结果无法写入画布：${formatIssues(parsed.issues)}`,
+          },
+        };
+      }
+      if (JSON.stringify(parsed.data) === JSON.stringify(current)) return {};
+      lastRemovalAt = 0;
+      return {
+        project: parsed.data,
+        past: [...state.past, snapshot(current)].slice(-HISTORY_LIMIT),
+        future: [],
+        dragSnapshotTaken: false,
+      };
     });
   },
 

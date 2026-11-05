@@ -3,6 +3,7 @@ import { formatIssues, validateGraph, deserializeProject } from "@haizhu/canvas-
 import { Button } from "@haizhu/ui";
 import { downloadTextFile, projectDownload } from "@/lib/download-project";
 import { useCanvasStore } from "@/store/canvas";
+import { useRunStore } from "@/store/run";
 import { APP_VERSION } from "@/version";
 
 export function TopBar() {
@@ -16,6 +17,12 @@ export function TopBar() {
   const loadProject = useCanvasStore((state) => state.loadProject);
   const setNotice = useCanvasStore((state) => state.setNotice);
   const alignAssetsDirectory = useCanvasStore((state) => state.alignAssetsDirectory);
+  const selectedCount = useCanvasStore((state) => state.selectedNodeIds.length);
+  const phase = useRunStore((state) => state.phase);
+  const running = useRunStore((state) => state.run?.status === "running");
+  const startRun = useRunStore((state) => state.startRun);
+  const cancelRun = useRunStore((state) => state.cancel);
+  const setSettingsOpen = useRunStore((state) => state.setSettingsOpen);
   const fileRef = useRef<HTMLInputElement>(null);
   const parsed = validateGraph(project.graph);
   const assetCount = project.assets.entries.length;
@@ -56,7 +63,10 @@ export function TopBar() {
               Haizhu Infinity Canvas
             </span>
           </div>
-          <p className="text-[11px] text-muted-foreground">v{APP_VERSION} · 脚手架，不调用模型</p>
+          <p className="text-[11px] text-muted-foreground">
+            v{APP_VERSION} · 可运行对话与图像
+            {phase === "online" ? " · 引擎在线" : phase === "offline" ? " · 引擎未连接" : ""}
+          </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <p className="text-xs text-muted-foreground" role="status">
@@ -64,6 +74,40 @@ export function TopBar() {
             {parsed.success ? "图校验通过" : "图校验失败"}
             {assetCount > 0 ? ` · ${assetCount} 个素材引用` : ""}
           </p>
+          <Button
+            id="run-graph"
+            type="button"
+            size="sm"
+            onClick={() => void startRun("all")}
+            disabled={running}
+            title="运行整张图，只跑一次"
+          >
+            运行
+          </Button>
+          <Button
+            id="run-selection"
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => void startRun("selection")}
+            disabled={running || selectedCount === 0}
+            title="运行选中的节点，并带上它们的上游"
+          >
+            运行所选
+          </Button>
+          <Button
+            id="cancel-run"
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => void cancelRun()}
+            disabled={!running}
+          >
+            取消
+          </Button>
+          <Button type="button" variant="outline" size="sm" onClick={() => setSettingsOpen(true)}>
+            设置
+          </Button>
           <Button type="button" variant="outline" size="sm" onClick={save}>
             保存
           </Button>
