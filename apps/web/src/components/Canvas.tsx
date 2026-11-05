@@ -97,9 +97,9 @@ function CanvasSurface() {
           <div className="max-w-sm rounded-xl border border-dashed border-border bg-background/70 px-6 py-5 text-center">
             <p className="text-sm font-medium">画布是空的</p>
             <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-              从左侧把「对话 LLM」拖到画布，再拖「图像」，把 text 连到 prompt。
+              从左侧把节点拖到画布。对话的 text 可以连到图像、ComfyUI 或视频的 prompt。
               <br />
-              右侧填提示词，「设置」里把密钥交给本地引擎，然后点「运行」。只跑一次。
+              右侧填参数，「设置」里把密钥交给本地引擎，然后点「运行」。视频会计费，只跑一次。
             </p>
           </div>
         </div>

@@ -45,8 +45,8 @@ def post_json(
             cancel=cancel,
         )
     except TransportError as exc:
-        raise AdapterError(sanitize(str(exc), settings.openai_api_key)) from exc
-    return _read_object(result, settings.openai_api_key)
+        raise AdapterError(sanitize(str(exc), settings.secret_values())) from exc
+    return read_json_object(result, settings.secret_values())
 
 
 def optional_string(data: dict[str, Any], key: str, *, default: str | None = None) -> str | None:
@@ -105,7 +105,7 @@ def image_size(data: dict[str, Any]) -> str:
     return value
 
 
-def _read_object(result: HttpResult, secret: str) -> dict[str, Any]:
+def read_json_object(result: HttpResult, secret: str | tuple[str, ...] | list[str]) -> dict[str, Any]:
     text = result.body.decode("utf-8", errors="replace")
     try:
         parsed = json.loads(text) if text else None

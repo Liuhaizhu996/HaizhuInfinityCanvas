@@ -423,11 +423,9 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
         const output: Record<string, unknown> = {};
         if (typeof result.outputs.text === "string") output.text = result.outputs.text;
         const image = result.outputs.image;
-        if (image && image.relativePath) {
-          output.image = {
-            relativePath: image.relativePath,
-            mediaType: image.mediaType || "image/png",
-          };
+        if (image?.relativePath) {
+          const mediaType = image.mediaType || "image/png";
+          output.image = { relativePath: image.relativePath, mediaType };
           if (!entries.some((entry) => entry.relativePath === image.relativePath)) {
             entries = [
               ...entries,
@@ -435,7 +433,24 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
                 id: assetIdFor(run.id, node.id),
                 relativePath: image.relativePath,
                 kind: "image" as const,
-                mediaType: image.mediaType || "image/png",
+                mediaType,
+              },
+            ];
+            changedEntries = true;
+          }
+        }
+        const video = result.outputs.video;
+        if (video?.relativePath) {
+          const mediaType = video.mediaType || "video/mp4";
+          output.video = { relativePath: video.relativePath, mediaType };
+          if (!entries.some((entry) => entry.relativePath === video.relativePath)) {
+            entries = [
+              ...entries,
+              {
+                id: assetIdFor(run.id, `${node.id}-video`),
+                relativePath: video.relativePath,
+                kind: "video" as const,
+                mediaType,
               },
             ];
             changedEntries = true;

@@ -64,7 +64,7 @@ export function TopBar() {
             </span>
           </div>
           <p className="text-[11px] text-muted-foreground">
-            v{APP_VERSION} · 可运行对话与图像
+            v{APP_VERSION} · 可运行对话、图像、ComfyUI 与视频
             {phase === "online" ? " · 引擎在线" : phase === "offline" ? " · 引擎未连接" : ""}
           </p>
         </div>
@@ -80,7 +80,7 @@ export function TopBar() {
             size="sm"
             onClick={() => void startRun("all")}
             disabled={running}
-            title="运行整张图，只跑一次"
+            title="运行整张图，只跑一次。视频节点会向 Wan 或 Kling 计费，不会自动重试。"
           >
             运行
           </Button>

@@ -125,6 +125,14 @@ describe("project document", () => {
     expect(deserializeProject(JSON.stringify(withPath("../secret.png"))).success).toBe(false);
     expect(deserializeProject(JSON.stringify(withPath("/etc/passwd"))).success).toBe(false);
     expect(deserializeProject(JSON.stringify(withPath("images/ok.png"))).success).toBe(true);
+    const videoEntry: ProjectDocument = {
+      ...project,
+      assets: {
+        directory: "Demo.hzcanvas.assets",
+        entries: [{ id: "clip", relativePath: "videos/clip.mp4", kind: "video", mediaType: "video/mp4" }],
+      },
+    };
+    expect(deserializeProject(JSON.stringify(videoEntry)).success).toBe(true);
 
     const duplicateIds: ProjectDocument = {
       ...project,

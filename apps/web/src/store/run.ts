@@ -43,6 +43,22 @@ const ERROR_TEXT: Record<string, string> = {
 
 let pollToken = 0;
 
+function credentialsBanner(message: string): CanvasBanner {
+  if (message.includes("WAN_API_KEY")) {
+    return {
+      tone: "error",
+      text: "引擎还没有 Wan 的 API Key。打开「设置」写入本地 engine/.env。只有点击运行才会提交，不会自动重试。",
+    };
+  }
+  if (message.includes("Kling")) {
+    return {
+      tone: "error",
+      text: "引擎还没有 Kling 密钥。打开「设置」，填写 API Key，或同时填写 Access Key 和 Secret Key。",
+    };
+  }
+  return { tone: "error", text: ERROR_TEXT.missing_credentials ?? message };
+}
+
 function bannerFor(run: RunSnapshot): CanvasBanner {
   if (run.status === "succeeded") return { tone: "info", text: "运行完成。" };
   if (run.status === "cancelled") return { tone: "info", text: "已取消。" };
@@ -60,6 +76,9 @@ function failureBanner(error: unknown): { phase: RunState["phase"]; banner: Canv
         phase: "online",
         banner: { tone: "empty", text: ERROR_TEXT[error.code] ?? error.message },
       };
+    }
+    if (error.code === "missing_credentials") {
+      return { phase: "online", banner: credentialsBanner(error.message) };
     }
     const known = ERROR_TEXT[error.code];
     const text = known && error.code !== "invalid_graph" ? known : error.message || known || "运行没有完成。";
