@@ -1,6 +1,6 @@
 import { PortSchema, type Port } from "@haizhu/canvas-core";
 
-export const nodeCategories = ["llm", "image", "video", "audio"] as const;
+export const nodeCategories = ["llm", "image", "video", "audio", "storyboard"] as const;
 
 export type NodeCategory = (typeof nodeCategories)[number];
 
@@ -14,7 +14,7 @@ export interface NodeDefinition {
 
 /**
  * Register a node manifest. Execution is intentionally absent:
- * v1.0.0-beta.1 does not call models or external APIs.
+ * Week 1 still does not call models or external APIs.
  */
 export function defineNode(definition: NodeDefinition): NodeDefinition {
   for (const port of definition.ports) {

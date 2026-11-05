@@ -63,4 +63,14 @@ export const stubCatalog: readonly NodeDefinition[] = [
       { id: "audio", name: "audio", direction: "output", dataType: "audio" },
     ],
   }),
+  defineNode({
+    type: "storyboard.board",
+    title: "分镜",
+    category: "storyboard",
+    summary: "分镜板占位。把文本收成 storyboard 端口。脚手架不会生成镜头。",
+    ports: [
+      { id: "prompt", name: "prompt", direction: "input", dataType: "text" },
+      { id: "board", name: "board", direction: "output", dataType: "storyboard" },
+    ],
+  }),
 ];

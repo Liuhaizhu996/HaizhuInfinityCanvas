@@ -67,6 +67,43 @@ body {
   height: 10px;
 }
 
+.react-flow__node-agent {
+  padding: 0;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+}
+
+.react-flow__node-agent.selected .hz-node {
+  box-shadow: 0 0 0 1px var(--primary);
+}
+
+.hz-port {
+  width: 10px;
+  height: 10px;
+  border: 2px solid var(--background);
+}
+
+.hz-port-text {
+  background: oklch(0.78 0.06 230);
+}
+
+.hz-port-image {
+  background: oklch(0.78 0.12 150);
+}
+
+.hz-port-video {
+  background: oklch(0.75 0.14 45);
+}
+
+.hz-port-audio {
+  background: oklch(0.75 0.12 320);
+}
+
+.hz-port-storyboard {
+  background: oklch(0.82 0.12 95);
+}
+
 .react-flow {
   --xy-background-color: transparent;
   --xy-node-background-color: var(--card);
