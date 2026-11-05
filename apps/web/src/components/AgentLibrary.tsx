@@ -1,4 +1,4 @@
-import { stubCatalog, type NodeDefinition } from "@haizhu/node-sdk";
+import { nodeCatalog, type NodeDefinition } from "@haizhu/node-sdk";
 import { beginNodeDrag, endNodeDrag } from "@/lib/dnd";
 import { useCanvasStore } from "@/store/canvas";
 
@@ -20,7 +20,7 @@ export function AgentLibrary() {
         <p className="text-[11px] text-muted-foreground">拖到画布，或点击添加</p>
       </div>
       <div className="flex-1 space-y-2 overflow-y-auto p-3">
-        {stubCatalog.map((item) => (
+        {nodeCatalog.map((item) => (
           <button
             key={item.type}
             type="button"
@@ -35,6 +35,7 @@ export function AgentLibrary() {
               <span className="text-sm font-medium">{item.title}</span>
               <span className="text-[10px] uppercase tracking-wide text-primary">
                 {categoryLabel[item.category]}
+                {item.executable ? " · 可运行" : " · 占位"}
               </span>
             </div>
             <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{item.summary}</p>
@@ -52,7 +53,7 @@ export function AgentLibrary() {
         ))}
       </div>
       <p className="border-t border-border px-4 py-3 text-[11px] leading-relaxed text-muted-foreground">
-        这些条目只是清单。本版本不会请求 OpenAI、ComfyUI、Wan、Kling、Edge-TTS 或 CosyVoice。
+        对话和图像由本地引擎执行。ComfyUI、视频、语音和分镜仍是占位，不会发起请求。
       </p>
     </aside>
   );

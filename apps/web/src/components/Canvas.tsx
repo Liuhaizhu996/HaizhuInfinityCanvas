@@ -1,12 +1,13 @@
 import { useMemo } from "react";
 import { Background, Controls, ReactFlow, ReactFlowProvider, useReactFlow } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
-import { stubCatalog } from "@haizhu/node-sdk";
+import { nodeCatalog } from "@haizhu/node-sdk";
 import { validateConnection } from "@haizhu/canvas-core";
 import { AgentNode } from "@/components/AgentNode";
 import { endNodeDrag, isNodeDrag, nodeDragType } from "@/lib/dnd";
 import { AGENT_NODE_TYPE, graphToFlowEdges, graphToFlowNodes } from "@/lib/flow-graph";
 import { useCanvasStore } from "@/store/canvas";
+import { useRunStore } from "@/store/run";
 
 const nodeTypes = { [AGENT_NODE_TYPE]: AgentNode };
 
@@ -19,6 +20,7 @@ function CanvasSurface() {
   const onEdgesChange = useCanvasStore((state) => state.onEdgesChange);
   const onConnect = useCanvasStore((state) => state.onConnect);
   const addFromCatalog = useCanvasStore((state) => state.addFromCatalog);
+  const banner = useRunStore((state) => state.banner);
   const { screenToFlowPosition } = useReactFlow();
 
   const nodes = useMemo(
@@ -46,7 +48,7 @@ function CanvasSurface() {
         const type = nodeDragType(event.dataTransfer);
         endNodeDrag();
         if (!type) return;
-        const definition = stubCatalog.find((item) => item.type === type);
+        const definition = nodeCatalog.find((item) => item.type === type);
         if (!definition) return;
         // Top-left of the new node, in flow space (pan and zoom included).
         const position = screenToFlowPosition({ x: event.clientX, y: event.clientY });
@@ -72,26 +74,47 @@ function CanvasSurface() {
           }).success;
         }}
         colorMode="dark"
+        connectionRadius={40}
+        defaultEdgeOptions={{ style: { stroke: "oklch(0.82 0.11 200)", strokeWidth: 2 } }}
+        connectionLineStyle={{ stroke: "oklch(0.82 0.11 200)", strokeWidth: 2 }}
         deleteKeyCode={["Backspace", "Delete"]}
         proOptions={{ hideAttribution: false }}
       >
         <Background gap={20} size={1} />
         <Controls />
       </ReactFlow>
+      {banner && !(banner.tone === "empty" && nodes.length > 0) ? (
+        <div
+          id="canvas-banner"
+          role="status"
+          className={`pointer-events-none absolute left-3 right-3 top-3 z-10 rounded-md border px-3 py-2 text-xs leading-relaxed ${bannerClass(banner.tone)}`}
+        >
+          {banner.text}
+        </div>
+      ) : null}
       {nodes.length === 0 ? (
         <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
           <div className="max-w-sm rounded-xl border border-dashed border-border bg-background/70 px-6 py-5 text-center">
             <p className="text-sm font-medium">画布是空的</p>
             <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-              从左侧 Agent 库拖到画布，或点击添加。
+              从左侧把「对话 LLM」拖到画布，再拖「图像」，把 text 连到 prompt。
               <br />
-              可以拖动、连线，按 Delete 删除，Ctrl+Z 撤销。节点不会执行。
+              右侧填提示词，「设置」里把密钥交给本地引擎，然后点「运行」。只跑一次。
             </p>
           </div>
         </div>
       ) : null}
     </main>
   );
+}
+
+function bannerClass(tone: "offline" | "error" | "empty" | "info" | "running"): string {
+  if (tone === "offline" || tone === "error") {
+    return "border-destructive/50 bg-background/90 text-destructive";
+  }
+  if (tone === "empty") return "border-dashed border-border bg-background/90 text-muted-foreground";
+  if (tone === "running") return "border-primary/40 bg-background/90 text-primary";
+  return "border-border bg-background/90 text-muted-foreground";
 }
 
 export function Canvas() {

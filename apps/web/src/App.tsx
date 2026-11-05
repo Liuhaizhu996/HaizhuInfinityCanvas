@@ -1,12 +1,22 @@
 import { useEffect } from "react";
 import { AgentLibrary } from "@/components/AgentLibrary";
 import { Canvas } from "@/components/Canvas";
+import { Inspector } from "@/components/Inspector";
+import { SettingsDialog } from "@/components/SettingsDialog";
 import { TopBar } from "@/components/TopBar";
 import { useCanvasStore } from "@/store/canvas";
+import { useRunStore } from "@/store/run";
 
 export function App() {
   const undo = useCanvasStore((state) => state.undo);
   const redo = useCanvasStore((state) => state.redo);
+  const refreshHealth = useRunStore((state) => state.refreshHealth);
+
+  useEffect(() => {
+    void refreshHealth();
+    const id = window.setInterval(() => void refreshHealth(), 5000);
+    return () => window.clearInterval(id);
+  }, [refreshHealth]);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -39,7 +49,9 @@ export function App() {
       <div className="flex min-h-0 flex-1">
         <AgentLibrary />
         <Canvas />
+        <Inspector />
       </div>
+      <SettingsDialog />
     </div>
   );
 }

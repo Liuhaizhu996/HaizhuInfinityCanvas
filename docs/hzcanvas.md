@@ -1,6 +1,6 @@
 # `.hzcanvas` project file
 
-Version `1.0.0-beta.1`. The web app downloads and opens this file. It does not call models, and it does not read or write the assets directory.
+Version `1.0.0-beta.1`. The web app downloads and opens this file. It does not read or write the assets directory. Model calls go to the local sidecar and are not part of this file.
 
 ## Files on disk
 
@@ -34,7 +34,7 @@ The browser build only transfers the JSON file. `assets.entries` is kept so a la
 | `id`, `name` | Document identity. The download file name is sanitized from `name`. |
 | `nodes[].type` | Catalog type, such as `openai.chat`. Not the React Flow renderer. |
 | `nodes[].position` | Flow coordinates. Finite numbers. The node's top-left is this point. |
-| `nodes[].data` | JSON object. The editor stores `label` here. |
+| `nodes[].data` | JSON object. The editor stores `label` and runner fields here (`prompt`, `model`, `system`, `temperature`, `size`, `seed`). After a run it may also store `output`. Secrets are not valid fields. |
 | `nodes[].ports` | Typed ports. Ids are unique on that node. |
 | `edges[]` | `source` / `sourcePort` is an output. `target` / `targetPort` is an input. |
 
@@ -104,6 +104,21 @@ A connection is valid only when the output and the input use the same type. `sto
 
 `kind` uses the same five port types. `mediaType` is an optional MIME type.
 
+## Runner fields and outputs
+
+`formatVersion` did not change. `node.data` was already an open object.
+
+| Key | Used by | Notes |
+| --- | --- | --- |
+| `prompt`, `system` | `openai.chat` (prompt also on image) | Text. A connected text input replaces `prompt` for that run. |
+| `model` | chat, image | Defaults in the sidecar: `gpt-4o-mini`, `dall-e-3`. |
+| `temperature`, `seed` | chat; seed also on image | Omitted when empty. Official Images APIs may reject `seed`. |
+| `size` | `openai.image` | Such as `1024x1024`. |
+| `output.text` | chat | The completion string. |
+| `output.image` | image | `{ relativePath, mediaType }` only. No bytes, no provider key. |
+
+A successful image also appends an `assets.entries` item whose `relativePath` is `images/<run>-<node>.png` (or `.jpg` / `.webp`). The sidecar keeps those bytes in `engine/var/assets/` so the browser can preview them at `GET /assets/<relativePath>`. Saving still does not create `Name.hzcanvas.assets/` on disk. A later desktop shell can copy the cache into that sibling directory.
+
 ## API
 
 `@haizhu/canvas-core` parses this file:
@@ -121,5 +136,6 @@ React Flow state in `apps/web` is a view over `ProjectDocument`. Undo and redo k
 - **保存** downloads `<graph name>.hzcanvas`.
 - **打开** reads a `.hzcanvas` JSON file and replaces the canvas. Invalid JSON or an invalid graph leaves the current canvas in place.
 - **撤销** / **重做**, or Ctrl+Z / Ctrl+Shift+Z / Ctrl+Y.
+- **运行** / **运行所选** / **取消** talk to the local sidecar. **设置** writes `engine/.env`.
 
-Adapters stay stubbed. Nothing in this path opens a network connection.
+Save and open still do not call a model. Run does, and only for `openai.chat` and `openai.image`.

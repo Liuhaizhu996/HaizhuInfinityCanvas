@@ -79,8 +79,8 @@ body {
 }
 
 .hz-port {
-  width: 10px;
-  height: 10px;
+  width: 14px;
+  height: 14px;
   border: 2px solid var(--background);
 }
 
@@ -102,6 +102,14 @@ body {
 
 .hz-port-storyboard {
   background: oklch(0.82 0.12 95);
+}
+
+.hz-preview {
+  width: 100%;
+  max-height: 180px;
+  object-fit: contain;
+  border-radius: 6px;
+  background: oklch(0.16 0.02 230);
 }
 
 .react-flow {

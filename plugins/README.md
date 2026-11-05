@@ -1,6 +1,6 @@
 # Plugins
 
-Adapter homes for later milestones. v1.0.0-beta.1 ships manifests in `@haizhu/node-sdk` and does not call these services.
+Adapter boundaries. Manifests live in `@haizhu/node-sdk`. The `openai.chat` and `openai.image` HTTP clients live in `engine/app/adapters` (stdlib client, no extra package). This folder stays empty of vendored source.
 
 | Directory (future) | Adapter | Boundary |
 | --- | --- | --- |
