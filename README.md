@@ -2,7 +2,7 @@
 
 `1.0.0-beta.1` · 私有 / All rights reserved
 
-无限画布上的多模型 Agent 工作流。当前版本 `1.0.0-beta.1`：可拖放的 Agent 库、`.hzcanvas` 保存、本地 FastAPI 跑一次「对话 → 图像」。没有桌面安装包。ComfyUI、视频、语音仍是占位。
+无限画布上的多模型 Agent 工作流。当前版本 `1.0.0-beta.1`：可拖放的 Agent 库、`.hzcanvas` 保存、本地 FastAPI 跑一次对话、OpenAI 图像、本机 ComfyUI 或 Wan/Kling 视频。没有桌面安装包。语音仍是占位。
 
 ## 运行 Web
 
@@ -38,9 +38,15 @@ python3 -m venv .venv
 # engine/.env
 OPENAI_BASE_URL=https://api.openai.com/v1
 OPENAI_API_KEY=sk-your-key
+COMFYUI_BASE_URL=http://127.0.0.1:8188
+WAN_API_BASE=https://dashscope.aliyuncs.com/api/v1
+WAN_API_KEY=
+KLING_API_BASE=https://api.klingai.com
+KLING_ACCESS_KEY=
+KLING_SECRET_KEY=
 ```
 
-对话和图像共用这一组。兼容网关把 Base URL 指到对方的 `/v1`。进程环境变量在启动时优先于文件；网页保存之后，以 sidecar 内存里的新值为准，并写回 `engine/.env`。
+对话和 OpenAI 图像共用 `OPENAI_*`。ComfyUI 指向你本机已经启动的服务。Wan 的 Base 要带 `/api/v1`，Kling 的 Base 不要带 `/v1`。进程环境变量在启动时优先于文件；网页保存之后，以 sidecar 内存里的新值为准，并写回 `engine/.env`。
 
 ```bash
 .venv/bin/pytest
@@ -57,6 +63,13 @@ OPENAI_API_KEY=sk-your-key
 
 取消会停掉正在进行的请求，并不再跑下游。图里如果有环，文件仍可保存，运行会返回 422。
 
+## 跑一次 ComfyUI 或视频
+
+1. ComfyUI：先在本机启动你自己的 ComfyUI（默认 `http://127.0.0.1:8188`）。在检查器里粘贴 **Save (API Format)** 工作流，或填写 `workflowPath`。提示词用 `{{prompt}}`，或填写提示词节点。可选参考图连到左侧的 `image`。点一次「运行」。
+2. 视频：在「设置」里填写 Wan 或 Kling 的地址和密钥，再在节点上选择供应商、模型和时长。把文本连到 `prompt`，需要图生视频时再连一张图。点一次「运行」。失败不会自动重试。取消会停止轮询；供应商如果已经接单，仍可能计费。
+
+工作流形状、轮询地址和密钥名称见 [engine/README.md](engine/README.md)。
+
 ## 文档
 
 - [可行性](docs/research.md)
@@ -68,13 +81,13 @@ OPENAI_API_KEY=sk-your-key
 
 ## English
 
-Private monorepo for a node-graph agent canvas. `1.0.0-beta.1` can drag agents, save `.hzcanvas`, and run one LLM → image pass against an OpenAI-compatible endpoint. It does not build a desktop installer.
+Private monorepo for a node-graph agent canvas. `1.0.0-beta.1` can drag agents, save `.hzcanvas`, and run one explicit pass for OpenAI chat, OpenAI image, a user-run ComfyUI, or Wan/Kling video. It does not build a desktop installer.
 
 - Web: `pnpm install`, then `pnpm --filter web dev` → http://127.0.0.1:5173 . Drag agents, connect `text` → `prompt`, set the key in Settings, then Run once. See [docs/hzcanvas.md](docs/hzcanvas.md).
 - Schema tests: `pnpm --filter @haizhu/canvas-core test`
 - Engine: commands above. Health returns `{"ok":true,"version":"1.0.0-beta.1"}`. Endpoints and adapter status: [engine/README.md](engine/README.md).
-- `OPENAI_BASE_URL` and `OPENAI_API_KEY` live in the environment or `engine/.env`. The example file stays blank. The graph file never stores the key.
-- Still stubbed: ComfyUI, Wan/Kling, Edge-TTS, CosyVoice, storyboard execution, batch runs, streaming, FFmpeg, Tauri. See `apps/desktop` and `plugins`.
+- Provider URLs and keys live in the environment or `engine/.env` (`OPENAI_*`, `COMFYUI_*`, `WAN_*`, `KLING_*`). The example file stays blank. The graph file never stores a key.
+- Still stubbed: Edge-TTS, CosyVoice, storyboard execution, batch runs, streaming, FFmpeg, Tauri. See `apps/desktop` and `plugins`.
 - Docs: feasibility, stack ADR, roadmap.
 
 ```

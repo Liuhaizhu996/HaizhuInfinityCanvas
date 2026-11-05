@@ -96,6 +96,15 @@ export function AgentNode({ id, data }: NodeProps<AgentFlowNode>) {
           className="hz-preview mt-2"
         />
       ) : null}
+      {data.output?.video ? (
+        <video
+          src={assetUrl(data.output.video.relativePath)}
+          controls
+          playsInline
+          preload="metadata"
+          className="hz-preview mt-2"
+        />
+      ) : null}
     </div>
   );
 }

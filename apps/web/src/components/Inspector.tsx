@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { nodeCatalog, type NodeField } from "@haizhu/node-sdk";
+import { nodeCatalog, type FieldOption, type NodeField } from "@haizhu/node-sdk";
 import { assetUrl } from "@/lib/engine-client";
 import { readOutput } from "@/lib/flow-graph";
 import { useCanvasStore } from "@/store/canvas";
@@ -82,9 +82,19 @@ export function Inspector() {
                 onCommit={(value) => commit({ [field.key]: value })}
               />
             ))}
+            {definition.type === "comfyui.image" ? (
+              <p className="text-[11px] leading-relaxed text-muted-foreground">
+                地址留空则用设置里的 COMFYUI_BASE_URL。工作流用 ComfyUI 的 Save (API Format)，不要把密钥贴进去。
+              </p>
+            ) : null}
+            {definition.type === "video.wan-kling" ? (
+              <p className="rounded-md border border-primary/40 px-3 py-2 text-xs leading-relaxed">
+                视频会向 Wan 或 Kling 计费。只有点击「运行」才会提交这一次，失败不会自动重试。取消会停止轮询且不再跑下游；供应商如果已经接单，仍可能计费。
+              </p>
+            ) : null}
             {!definition.executable ? (
               <p className="rounded-md border border-dashed border-border px-3 py-2 text-xs leading-relaxed text-muted-foreground">
-                这个节点本周不会执行。可运行的是对话 LLM 和图像。
+                这个节点本周不会执行。可运行的是对话、OpenAI 图像、ComfyUI 和视频。
               </p>
             ) : null}
             {running ? (
@@ -107,6 +117,19 @@ export function Inspector() {
                   className="hz-preview mt-1"
                 />
                 <p className="mt-1 font-mono text-[10px] text-muted-foreground">{output.image.relativePath}</p>
+              </div>
+            ) : null}
+            {output?.video ? (
+              <div>
+                <div className="text-[11px] text-muted-foreground">输出</div>
+                <video
+                  src={assetUrl(output.video.relativePath)}
+                  controls
+                  playsInline
+                  preload="metadata"
+                  className="hz-preview mt-1"
+                />
+                <p className="mt-1 font-mono text-[10px] text-muted-foreground">{output.video.relativePath}</p>
               </div>
             ) : null}
           </form>
@@ -132,6 +155,23 @@ function CatalogField({
   onFocus: () => void;
   onCommit: (value: string | number | undefined) => void;
 }) {
+  if (field.kind === "select") {
+    const options = field.options ?? [];
+    const allowed = new Set(options.map((option) => option.value));
+    const fallback = typeof field.default === "string" ? field.default : options[0]?.value ?? "";
+    const shown = typeof value === "string" && allowed.has(value) ? value : fallback;
+    return (
+      <SelectField
+        label={field.label}
+        help={field.help}
+        value={shown}
+        options={options}
+        disabled={disabled}
+        onFocus={onFocus}
+        onChange={(next) => onCommit(next)}
+      />
+    );
+  }
   if (field.kind === "number") {
     return (
       <NumberField
@@ -156,6 +196,44 @@ function CatalogField({
       onFocus={onFocus}
       onChange={(next) => onCommit(next)}
     />
+  );
+}
+
+function SelectField({
+  label,
+  help,
+  value,
+  options,
+  disabled,
+  onFocus,
+  onChange,
+}: {
+  label: string;
+  help?: string;
+  value: string;
+  options: readonly FieldOption[];
+  disabled?: boolean;
+  onFocus: () => void;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <label className="block">
+      <span className="text-[11px] text-muted-foreground">{label}</span>
+      <select
+        className="mt-1 w-full rounded-md border border-input bg-background px-2 py-1.5 text-xs text-foreground outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:opacity-60"
+        value={value}
+        disabled={disabled}
+        onFocus={onFocus}
+        onChange={(event) => onChange(event.target.value)}
+      >
+        {options.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+      {help ? <span className="mt-1 block text-[10px] leading-relaxed text-muted-foreground">{help}</span> : null}
+    </label>
   );
 }
 

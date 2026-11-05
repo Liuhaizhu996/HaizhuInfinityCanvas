@@ -3,12 +3,15 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any
 
+from app.adapters.comfyui import run_comfyui
 from app.adapters.openai_chat import run_chat
 from app.adapters.openai_common import AdapterError
 from app.adapters.openai_image import run_image
 from app.adapters.transport import RunCancelled, Transport
-from app.catalog import OPENAI_NODE_TYPES
+from app.adapters.video_wan_kling import run_video
+from app.catalog import EXECUTABLE_NODE_TYPES
 from app.config import SettingsStore
 from app.errors import sanitize
 from app.graph import ExecutableGraph, Node
@@ -44,8 +47,7 @@ def execute_graph(
             _finish_cancelled(record)
             return
         except Exception as exc:
-            secret = settings.get().openai_api_key
-            _mark(record, node_id, status="failed", error=sanitize(str(exc), secret))
+            _mark(record, node_id, status="failed", error=sanitize(str(exc), settings.get().secret_values()))
             continue
         _mark(record, node_id, status="succeeded", error=None, outputs=outputs)
 
@@ -71,13 +73,37 @@ def _dispatch(
     transport: Transport,
     asset_root: Path,
 ) -> dict[str, object]:
-    if node.type not in OPENAI_NODE_TYPES:
-        raise AdapterError(f"「{node.type}」还不能执行。本周只运行 openai.chat 和 openai.image。")
+    if node.type not in EXECUTABLE_NODE_TYPES:
+        raise AdapterError(
+            f"「{node.type}」还不能执行。当前可运行 openai.chat、openai.image、comfyui.image、video.wan-kling。"
+        )
     prompt = _input_text(node, graph, record)
     current = settings.get()
     if node.type == "openai.chat":
         return run_chat(node, prompt, current, transport, record.cancel)
-    return run_image(
+    if node.type == "openai.image":
+        return run_image(
+            node,
+            prompt,
+            current,
+            transport,
+            record.cancel,
+            run_id=record.id,
+            asset_root=asset_root,
+        )
+    image = _optional_image(node, graph, record)
+    if node.type == "comfyui.image":
+        return run_comfyui(
+            node,
+            prompt,
+            current,
+            transport,
+            record.cancel,
+            run_id=record.id,
+            asset_root=asset_root,
+            image=image,
+        )
+    return run_video(
         node,
         prompt,
         current,
@@ -85,6 +111,7 @@ def _dispatch(
         record.cancel,
         run_id=record.id,
         asset_root=asset_root,
+        image=image,
     )
 
 
@@ -107,6 +134,24 @@ def _input_text(node: Node, graph: ExecutableGraph, record: RunRecord) -> str:
     if isinstance(local, str) and local.strip():
         return local.strip()
     raise AdapterError("提示词是空的。在检查器里填写，或连一条文本进来。")
+
+
+def _optional_image(node: Node, graph: ExecutableGraph, record: RunRecord) -> dict[str, Any] | None:
+    found: dict[str, Any] | None = None
+    for edge in graph.edges:
+        if edge.target != node.id:
+            continue
+        port = node.port(edge.target_port)
+        if port is None or port.direction != "input" or port.data_type != "image":
+            continue
+        with record.lock:
+            upstream = record.nodes[edge.source].outputs.get(edge.source_port)
+        if not isinstance(upstream, dict) or not isinstance(upstream.get("relativePath"), str):
+            raise AdapterError("上游没有产出图像。")
+        if found is not None:
+            raise AdapterError("这个节点只接受一路图像输入。")
+        found = upstream
+    return found
 
 
 def _upstream_block(record: RunRecord, graph: ExecutableGraph, node_id: str) -> str | None:

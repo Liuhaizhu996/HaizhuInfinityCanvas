@@ -3,14 +3,17 @@ import type { Edge, Node } from "@xyflow/react";
 
 export const AGENT_NODE_TYPE = "agent" as const;
 
-export type StoredImageOutput = {
+export type StoredMediaOutput = {
   relativePath: string;
   mediaType?: string;
 };
 
+export type StoredImageOutput = StoredMediaOutput;
+
 export type StoredOutput = {
   text?: string;
-  image?: StoredImageOutput;
+  image?: StoredMediaOutput;
+  video?: StoredMediaOutput;
 };
 
 export type AgentNodeData = {
@@ -35,18 +38,22 @@ export function readOutput(data: Record<string, unknown>): StoredOutput | undefi
   const record = output as Record<string, unknown>;
   const result: StoredOutput = {};
   if (typeof record.text === "string" && record.text) result.text = record.text;
-  const image = record.image;
-  if (image && typeof image === "object") {
-    const imageRecord = image as Record<string, unknown>;
-    if (typeof imageRecord.relativePath === "string" && imageRecord.relativePath) {
-      result.image = {
-        relativePath: imageRecord.relativePath,
-        mediaType: typeof imageRecord.mediaType === "string" ? imageRecord.mediaType : undefined,
-      };
-    }
-  }
-  if (!result.text && !result.image) return undefined;
+  const image = readStoredMedia(record.image);
+  if (image) result.image = image;
+  const video = readStoredMedia(record.video);
+  if (video) result.video = video;
+  if (!result.text && !result.image && !result.video) return undefined;
   return result;
+}
+
+function readStoredMedia(value: unknown): StoredMediaOutput | undefined {
+  if (!value || typeof value !== "object") return undefined;
+  const record = value as Record<string, unknown>;
+  if (typeof record.relativePath !== "string" || !record.relativePath) return undefined;
+  return {
+    relativePath: record.relativePath,
+    mediaType: typeof record.mediaType === "string" ? record.mediaType : undefined,
+  };
 }
 
 export function graphToFlowNodes(

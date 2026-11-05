@@ -6,9 +6,11 @@ import threading
 import uuid
 from pathlib import Path
 
+from app.adapters.fields import vendor_name
+from app.adapters.openai_common import AdapterError
 from app.adapters.transport import Transport, abort
 from app.catalog import OPENAI_NODE_TYPES
-from app.config import SettingsStore
+from app.config import Settings, SettingsStore
 from app.errors import ApiError, sanitize
 from app.executor import execute_graph
 from app.graph import ExecutableGraph, prepare_run
@@ -35,13 +37,9 @@ class RunManager:
 
     def submit(self, graph_payload: object, node_ids: list[str] | None) -> dict[str, object]:
         graph = prepare_run(graph_payload, node_ids, version=self._version)
-        if any(node.type in OPENAI_NODE_TYPES for node in graph.nodes.values()):
-            if not self._settings.get().openai_api_key:
-                raise ApiError(
-                    422,
-                    "missing_credentials",
-                    "OPENAI_API_KEY is not set on the sidecar.",
-                )
+        missing = _missing_credentials(graph, self._settings.get())
+        if missing is not None:
+            raise ApiError(422, "missing_credentials", missing)
         record = RunRecord(
             id=str(uuid.uuid4()),
             status="running",
@@ -99,7 +97,7 @@ class RunManager:
         try:
             execute_graph(record, graph, self._settings, self._transport, self._asset_root)
         except Exception as exc:
-            secret = self._settings.get().openai_api_key
+            secret = self._settings.get().secret_values()
             with record.lock:
                 if record.status == "running":
                     record.status = "failed"
@@ -109,3 +107,21 @@ class RunManager:
                 if record.status == "running":
                     record.status = "failed"
                     record.error = record.error or "Run stopped before it finished."
+
+
+def _missing_credentials(graph: ExecutableGraph, settings: Settings) -> str | None:
+    if any(node.type in OPENAI_NODE_TYPES for node in graph.nodes.values()) and not settings.openai_api_key:
+        return "OPENAI_API_KEY is not set on the sidecar."
+    for node_id in graph.order:
+        node = graph.nodes[node_id]
+        if node.type != "video.wan-kling":
+            continue
+        try:
+            vendor = vendor_name(node.data)
+        except AdapterError as exc:
+            raise ApiError(422, "invalid_graph", str(exc)) from exc
+        if vendor == "wan" and not settings.wan_api_key:
+            return "WAN_API_KEY is not set on the sidecar."
+        if vendor == "kling" and not settings.kling_configured():
+            return "Kling credentials are not set. Set KLING_API_KEY or both KLING_ACCESS_KEY and KLING_SECRET_KEY."
+    return None

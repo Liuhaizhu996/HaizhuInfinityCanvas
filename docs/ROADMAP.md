@@ -14,7 +14,7 @@ Version `1.0.0-beta.1` is the scaffold in this repository. It is not the MVP.
 - FastAPI `GET /health`.
 - Tauri noted in `apps/desktop`, not built.
 
-The unreleased line on this version adds the first sidecar run: `openai.chat`, `openai.image`, inspector, and local settings. Still out: ComfyUI, video, TTS, batch runs, FFmpeg, installers.
+The unreleased line on this version adds sidecar runs for `openai.chat`, `openai.image`, `comfyui.image`, and `video.wan-kling`, plus the inspector and local settings. Still out: TTS, batch runs, FFmpeg, installers.
 
 ## MVP — WebUI
 
@@ -29,7 +29,7 @@ The milestone after the scaffold. Still a browser app talking to a local sidecar
 
 Done when a person can wire LLM → image on the canvas, run it once against their own endpoints, and reload the document later.
 
-The first slice of that is in the unreleased `1.0.0-beta.1` line: submit, per-node status, cancel, cycle rejection, the two OpenAI-compatible adapters, the inspector, and settings that write `engine/.env`. Adapters 3–6 are still stubs. There is no batch runner.
+The unreleased `1.0.0-beta.1` line now includes submit, per-node status, cancel, cycle rejection, the OpenAI adapters, ComfyUI image, Wan/Kling video, the inspector, and settings that write `engine/.env`. Adapters 5–6 (TTS) and storyboard execution are still stubs. There is no batch runner.
 
 ## Phase 2 — Windows desktop
 

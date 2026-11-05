@@ -4,9 +4,14 @@ export const nodeCategories = ["llm", "image", "video", "audio", "storyboard"] a
 
 export type NodeCategory = (typeof nodeCategories)[number];
 
-export const fieldKinds = ["text", "textarea", "number"] as const;
+export const fieldKinds = ["text", "textarea", "number", "select"] as const;
 
 export type FieldKind = (typeof fieldKinds)[number];
+
+export interface FieldOption {
+  value: string;
+  label: string;
+}
 
 /** Inspector field stored on `node.data`. Never a secret. */
 export interface NodeField {
@@ -16,6 +21,7 @@ export interface NodeField {
   placeholder?: string;
   help?: string;
   default?: string | number;
+  options?: readonly FieldOption[];
 }
 
 export interface NodeDefinition {
@@ -30,6 +36,7 @@ export interface NodeDefinition {
 }
 
 const FIELD_KEY = /^[A-Za-z][A-Za-z0-9_]{0,40}$/;
+const OPTION_VALUE = /^[A-Za-z0-9_.:*-]{1,40}$/;
 const RESERVED_KEYS = new Set(["label", "output"]);
 const SECRET_KEY = /key|secret|token|password|credential/i;
 
@@ -58,6 +65,23 @@ export function defineNode(definition: NodeDefinition): NodeDefinition {
     if (field.kind === "number") {
       if (field.default !== undefined && typeof field.default !== "number") {
         throw new Error(`Field "${field.key}" on "${definition.type}" needs a numeric default.`);
+      }
+    } else if (field.kind === "select") {
+      if (!field.options || field.options.length === 0) {
+        throw new Error(`Field "${field.key}" on "${definition.type}" needs options.`);
+      }
+      const values = new Set<string>();
+      for (const option of field.options) {
+        if (!OPTION_VALUE.test(option.value) || option.label.trim().length === 0) {
+          throw new Error(`Field "${field.key}" on "${definition.type}" has an invalid option.`);
+        }
+        if (values.has(option.value)) {
+          throw new Error(`Field "${field.key}" on "${definition.type}" repeats option "${option.value}".`);
+        }
+        values.add(option.value);
+      }
+      if (typeof field.default !== "string" || !values.has(field.default)) {
+        throw new Error(`Field "${field.key}" on "${definition.type}" needs a default option.`);
       }
     } else if (field.default !== undefined && typeof field.default !== "string") {
       throw new Error(`Field "${field.key}" on "${definition.type}" needs a string default.`);
