@@ -9,7 +9,8 @@ Version `1.0.0-beta.1` is the scaffold in this repository. It is not the MVP.
 - pnpm workspace, proprietary license, no secrets.
 - React Flow canvas with an empty graph, drag, connect, and delete.
 - Stub Agent library (manifests only).
-- Zod graph document in `@haizhu/canvas-core`.
+- Zod graph document in `@haizhu/canvas-core`, plus `.hzcanvas` save/load (JSON only; assets directory is a convention).
+- Drag agents onto the canvas, and undo/redo in the session.
 - FastAPI `GET /health`.
 - Tauri noted in `apps/desktop`, not built.
 
@@ -19,7 +20,7 @@ Out of this beta: model calls, FFmpeg, installers.
 
 The milestone after the scaffold. Still a browser app talking to a local sidecar.
 
-- Save and reload a graph JSON file. Validate with `GraphSchema` before load.
+- Graph JSON save/load already exists in beta.1 (`.hzcanvas`). The MVP adds an inspector and a sidecar on top of that file.
 - Node inspector for the stub fields a runner needs (prompt, model id, seed) without embedding secrets in the file.
 - Sidecar endpoints: submit graph, node status, cancel. Reject cycles.
 - One user-triggered call for each first adapter, then stop. No batch runner and no unattended retries.
