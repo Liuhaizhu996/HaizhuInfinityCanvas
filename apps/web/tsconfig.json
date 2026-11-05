@@ -1,0 +1,15 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "jsx": "react-jsx",
+    "types": ["vite/client"],
+    "paths": {
+      "@/*": ["./src/*"],
+      "@haizhu/canvas-core": ["./../../packages/canvas-core/src/index.ts"],
+      "@haizhu/node-sdk": ["./../../packages/node-sdk/src/index.ts"],
+      "@haizhu/ui": ["./../../packages/ui/src/index.ts"]
+    }
+  },
+  "include": ["src"]
+}

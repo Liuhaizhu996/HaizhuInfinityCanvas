@@ -1,0 +1,11 @@
+Copyright (c) 2026 Liuhaizhu996
+
+All rights reserved.
+
+The original source code in this repository is proprietary. Except where a
+file explicitly states a different license, no permission is granted to use,
+copy, modify, merge, publish, distribute, sublicense, or sell the software.
+
+Third-party packages remain under their own licenses. This project accepts
+MIT and Apache-2.0 dependencies only. AGPL and GPL code is not vendored and
+must not be copied into this repository.
