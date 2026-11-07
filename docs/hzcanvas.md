@@ -110,14 +110,17 @@ A connection is valid only when the output and the input use the same type. `sto
 
 | Key | Used by | Notes |
 | --- | --- | --- |
-| `prompt`, `system` | `openai.chat` (prompt also on image) | Text. A connected text input replaces `prompt` for that run. |
-| `model` | chat, image | Defaults in the sidecar: `gpt-4o-mini`, `dall-e-3`. |
-| `temperature`, `seed` | chat; seed also on image | Omitted when empty. Official Images APIs may reject `seed`. |
-| `size` | `openai.image` | Such as `1024x1024`. |
+| `prompt`, `system` | `openai.chat` (prompt also on image, ComfyUI, and video) | Text. A connected text input replaces `prompt` for that run. |
+| `model` | chat, image, video | Defaults in the sidecar: `gpt-4o-mini`, `dall-e-3`, `wan2.6-t2v` (Kling falls back to `kling-v2-master`). |
+| `temperature`, `seed` | chat; seed also on image, ComfyUI, and Wan | Omitted when empty. Official Images APIs may reject `seed`. Kling does not receive seed. |
+| `size` | `openai.image`, video | Image: `1024x1024`. Video: `1280*720`, `720P`, or `16:9`. |
+| `baseUrl`, `workflow`, `workflowPath`, `promptNode`, `promptInput`, `imageNode`, `imageInput`, `timeoutSec` | `comfyui.image` | ComfyUI address and API-format workflow. Not a secret. |
+| `vendor`, `mode`, `duration`, `timeoutSec` | `video.wan-kling` | `vendor` is `wan` or `kling`. Keys stay in the sidecar. |
 | `output.text` | chat | The completion string. |
-| `output.image` | image | `{ relativePath, mediaType }` only. No bytes, no provider key. |
+| `output.image` | image, ComfyUI | `{ relativePath, mediaType }` only. No bytes, no provider key. |
+| `output.video` | video | `{ relativePath, mediaType }` only. Path like `videos/<run>-<node>.mp4`. |
 
-A successful image also appends an `assets.entries` item whose `relativePath` is `images/<run>-<node>.png` (or `.jpg` / `.webp`). The sidecar keeps those bytes in `engine/var/assets/` so the browser can preview them at `GET /assets/<relativePath>`. Saving still does not create `Name.hzcanvas.assets/` on disk. A later desktop shell can copy the cache into that sibling directory.
+A successful image also appends an `assets.entries` item whose `relativePath` is `images/<run>-<node>.png` (or `.jpg` / `.webp`). A successful video appends `videos/<run>-<node>.mp4` (or `.webm`) with `kind: "video"`. The sidecar keeps those bytes in `engine/var/assets/` so the browser can preview them at `GET /assets/<relativePath>`. Saving still does not create `Name.hzcanvas.assets/` on disk. A later desktop shell can copy the cache into that sibling directory.
 
 ## API
 
@@ -138,4 +141,4 @@ React Flow state in `apps/web` is a view over `ProjectDocument`. Undo and redo k
 - **撤销** / **重做**, or Ctrl+Z / Ctrl+Shift+Z / Ctrl+Y.
 - **运行** / **运行所选** / **取消** talk to the local sidecar. **设置** writes `engine/.env`.
 
-Save and open still do not call a model. Run does, and only for `openai.chat` and `openai.image`.
+Save and open still do not call a model. Run does, for `openai.chat`, `openai.image`, `comfyui.image`, and `video.wan-kling`. Video runs only when the user clicks 运行.

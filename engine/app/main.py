@@ -1,4 +1,4 @@
-"""FastAPI sidecar: health, one-shot graph runs, and local OpenAI-compatible settings."""
+"""FastAPI sidecar: health, one-shot graph runs, and local provider settings."""
 
 from __future__ import annotations
 
@@ -58,7 +58,7 @@ def create_app(
 
     @app.get("/adapters")
     def adapters() -> dict[str, object]:
-        return {"adapters": adapter_catalog(bool(settings.get().openai_api_key))}
+        return {"adapters": adapter_catalog(settings.get())}
 
     @app.get("/settings")
     def get_settings() -> dict[str, object]:
@@ -67,13 +67,18 @@ def create_app(
     @app.put("/settings")
     async def put_settings(request: Request) -> dict[str, object]:
         payload = await _json_object(request)
-        base_url = payload.get("openaiBaseUrl", None)
-        api_key = payload.get("openaiApiKey", None)
-        if base_url is not None and not isinstance(base_url, str):
-            raise ApiError(422, "invalid_settings", "openaiBaseUrl must be a string.")
-        if api_key is not None and not isinstance(api_key, str):
-            raise ApiError(422, "invalid_settings", "openaiApiKey must be a string.")
-        return settings.update(openai_base_url=base_url, openai_api_key=api_key)
+        return settings.update(
+            openai_base_url=_optional_text(payload, "openaiBaseUrl"),
+            openai_api_key=_optional_text(payload, "openaiApiKey"),
+            comfyui_base_url=_optional_text(payload, "comfyuiBaseUrl"),
+            comfyui_api_key=_optional_text(payload, "comfyuiApiKey"),
+            wan_base_url=_optional_text(payload, "wanBaseUrl"),
+            wan_api_key=_optional_text(payload, "wanApiKey"),
+            kling_base_url=_optional_text(payload, "klingBaseUrl"),
+            kling_access_key=_optional_text(payload, "klingAccessKey"),
+            kling_secret_key=_optional_text(payload, "klingSecretKey"),
+            kling_api_key=_optional_text(payload, "klingApiKey"),
+        )
 
     @app.post("/runs", status_code=202)
     async def create_run(request: Request) -> dict[str, object]:
@@ -105,6 +110,15 @@ def create_app(
         return FileResponse(path, media_type=media_type_for(path))
 
     return app
+
+
+def _optional_text(payload: dict[str, Any], key: str) -> str | None:
+    if key not in payload or payload[key] is None:
+        return None
+    value = payload[key]
+    if not isinstance(value, str):
+        raise ApiError(422, "invalid_settings", f"{key} must be a string.")
+    return value
 
 
 async def _json_object(request: Request) -> dict[str, Any]:

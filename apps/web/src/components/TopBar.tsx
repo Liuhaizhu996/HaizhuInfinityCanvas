@@ -119,7 +119,7 @@ export function TopBar() {
             size="sm"
             onClick={() => void startRun("all")}
             disabled={running}
-            title="运行整张图，只跑一次"
+            title="运行整张图，只跑一次。视频会计费，不会自动重试。"
           >
             <Play aria-hidden />
             运行
@@ -190,7 +190,10 @@ export function TopBar() {
         </div>
       </header>
       {notice ? (
-        <div className="pointer-events-none fixed bottom-5 left-1/2 z-40 w-[min(440px,calc(100%-32px))] -translate-x-1/2">
+        <div
+          className="pointer-events-none fixed z-40 flex justify-center px-4"
+          style={{ bottom: 76, left: "var(--hz-library)", right: "var(--hz-inspector)" }}
+        >
           <p
             role="status"
             className={`hz-glass rounded-xl border px-3.5 py-2.5 text-xs leading-relaxed ${

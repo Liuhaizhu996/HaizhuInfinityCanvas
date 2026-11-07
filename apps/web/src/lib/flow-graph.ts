@@ -9,6 +9,8 @@ export type StoredMediaOutput = {
   mediaType?: string;
 };
 
+export type StoredImageOutput = StoredMediaOutput;
+
 export type StoredOutput = {
   text?: string;
   image?: StoredMediaOutput;

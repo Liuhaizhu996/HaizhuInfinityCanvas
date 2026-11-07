@@ -90,7 +90,7 @@ export function AgentLibrary() {
         })}
       </div>
       <p className="border-t border-border px-3 py-3 text-[11px] leading-relaxed text-muted-foreground">
-        对话和图像发给本地引擎。其余节点只保存，不发起请求。
+        点「运行」才提交一次。视频会计费，不会自动重试。
       </p>
     </aside>
   );
@@ -116,7 +116,7 @@ function CatalogRow({ item, onAdd }: { item: NodeDefinition; onAdd: () => void }
       <div className="mt-0.5 truncate font-mono text-[11px] text-muted-foreground" translate="no">
         {item.type}
       </div>
-      <p className="mt-1 line-clamp-2 text-[12px] leading-relaxed text-muted-foreground">{item.summary}</p>
+      <p className="mt-1 line-clamp-1 text-[12px] leading-relaxed text-muted-foreground">{item.summary}</p>
       <ul className="mt-2 flex flex-wrap gap-x-2 gap-y-1">
         {item.ports.map((port) => (
           <li

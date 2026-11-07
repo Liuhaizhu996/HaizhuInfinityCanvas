@@ -31,6 +31,20 @@ STORYBOARD_PORTS = [
     {"id": "board", "name": "board", "direction": "output", "dataType": "storyboard"},
 ]
 
+COMFY_PORTS = [
+    {"id": "prompt", "name": "prompt", "direction": "input", "dataType": "text"},
+    {"id": "image_in", "name": "image", "direction": "input", "dataType": "image"},
+    {"id": "image", "name": "image", "direction": "output", "dataType": "image"},
+]
+
+VIDEO_PORTS = [
+    {"id": "prompt", "name": "prompt", "direction": "input", "dataType": "text"},
+    {"id": "image", "name": "image", "direction": "input", "dataType": "image"},
+    {"id": "video", "name": "video", "direction": "output", "dataType": "video"},
+]
+
+MP4_BYTES = bytes.fromhex("000000186674797069736f6d0000000069736f6d6d703432")
+
 
 def node(node_id: str, node_type: str, ports: list[dict[str, str]], **data: object) -> dict[str, object]:
     return {
@@ -48,6 +62,14 @@ def chat_node(node_id: str, **data: object) -> dict[str, object]:
 
 def image_node(node_id: str, **data: object) -> dict[str, object]:
     return node(node_id, "openai.image", IMAGE_PORTS, **data)
+
+
+def comfy_node(node_id: str, **data: object) -> dict[str, object]:
+    return node(node_id, "comfyui.image", COMFY_PORTS, **data)
+
+
+def video_node(node_id: str, **data: object) -> dict[str, object]:
+    return node(node_id, "video.wan-kling", VIDEO_PORTS, **data)
 
 
 def edge(edge_id: str, source: str, target: str, source_port: str = "text", target_port: str = "prompt") -> dict[str, str]:
@@ -82,15 +104,18 @@ class FakeTransport:
         *,
         headers: dict[str, str] | None = None,
         json_body: dict[str, object] | None = None,
+        body: bytes | None = None,
         timeout: float = 120,
         cancel: threading.Event | None = None,
+        max_bytes: int = 25 * 1024 * 1024,
     ) -> HttpResult:
-        del timeout
+        del timeout, max_bytes
         call = {
             "method": method,
             "url": url,
             "headers": dict(headers or {}),
             "json": json_body,
+            "body": body,
         }
         self.calls.append(call)
         if cancel is not None and cancel.is_set():

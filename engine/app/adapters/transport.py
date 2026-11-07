@@ -1,7 +1,7 @@
-"""Small HTTP client for OpenAI-compatible endpoints.
+"""Small HTTP client for sidecar provider calls.
 
 Stdlib only, so the sidecar does not take another third-party license.
-Cancel closes the in-flight connection.
+Cancel closes the in-flight connection. A raw body is used for multipart uploads.
 """
 
 from __future__ import annotations
@@ -17,6 +17,7 @@ from typing import Protocol
 from urllib.parse import urlsplit
 
 _MAX_BYTES = 25 * 1024 * 1024
+_MAX_ALLOWED = 80 * 1024 * 1024
 _LOCK = threading.Lock()
 _OPEN: dict[int, list[http.client.HTTPConnection]] = {}
 
@@ -49,8 +50,10 @@ class Transport(Protocol):
         *,
         headers: Mapping[str, str] | None = None,
         json_body: Mapping[str, object] | None = None,
+        body: bytes | None = None,
         timeout: float = 120,
         cancel: threading.Event | None = None,
+        max_bytes: int = _MAX_BYTES,
     ) -> HttpResult: ...
 
 
@@ -73,9 +76,15 @@ class UrllibTransport:
         *,
         headers: Mapping[str, str] | None = None,
         json_body: Mapping[str, object] | None = None,
+        body: bytes | None = None,
         timeout: float = 120,
         cancel: threading.Event | None = None,
+        max_bytes: int = _MAX_BYTES,
     ) -> HttpResult:
+        if json_body is not None and body is not None:
+            raise TransportError("Request cannot include both JSON and a raw body.")
+        if max_bytes < 1 or max_bytes > _MAX_ALLOWED:
+            raise TransportError("Response limit is invalid.")
         if cancel is not None and cancel.is_set():
             raise RunCancelled()
         # The socket read can ignore a close from another thread. Poll so cancel
@@ -91,8 +100,10 @@ class UrllibTransport:
                     url,
                     headers=headers,
                     json_body=json_body,
+                    body=body,
                     timeout=timeout,
                     cancel=local_cancel,
+                    max_bytes=max_bytes,
                 )
             except BaseException as exc:
                 outcome["error"] = exc
@@ -129,22 +140,27 @@ class UrllibTransport:
         *,
         headers: Mapping[str, str] | None,
         json_body: Mapping[str, object] | None,
+        body: bytes | None,
         timeout: float,
         cancel: threading.Event,
+        max_bytes: int,
     ) -> HttpResult:
         _require_http_url(url)
         current_method = method.upper()
         current_url = url
         current_headers = dict(headers or {})
-        current_body = json_body
+        current_json = json_body
+        current_body = body
         for _ in range(4):
             result, location = self._once(
                 current_method,
                 current_url,
                 headers=current_headers,
-                json_body=current_body,
+                json_body=current_json,
+                body=current_body,
                 timeout=timeout,
                 cancel=cancel,
+                max_bytes=max_bytes,
             )
             if result.status not in {301, 302, 303, 307, 308} or not location:
                 return result
@@ -153,6 +169,7 @@ class UrllibTransport:
             current_url = _join(current_url, location)
             _require_http_url(current_url)
             current_headers = {}
+            current_json = None
             current_body = None
         raise TransportError("Too many redirects.")
 
@@ -163,8 +180,10 @@ class UrllibTransport:
         *,
         headers: Mapping[str, str],
         json_body: Mapping[str, object] | None,
+        body: bytes | None,
         timeout: float,
         cancel: threading.Event | None,
+        max_bytes: int,
     ) -> tuple[HttpResult, str | None]:
         if cancel is not None and cancel.is_set():
             raise RunCancelled()
@@ -186,20 +205,23 @@ class UrllibTransport:
         try:
             if cancel is not None and cancel.is_set():
                 raise RunCancelled()
-            body: bytes | None = None
+            payload: bytes | None = None
             request_headers = {str(key): str(value) for key, value in headers.items()}
             if json_body is not None:
-                body = json.dumps(json_body, ensure_ascii=False).encode("utf-8")
+                payload = json.dumps(json_body, ensure_ascii=False).encode("utf-8")
                 request_headers["Content-Type"] = "application/json"
-            connection.request(method, path, body=body, headers=request_headers)
+            elif body is not None:
+                payload = body
+                request_headers.setdefault("Content-Type", "application/octet-stream")
+            connection.request(method, path, body=payload, headers=request_headers)
             if cancel is not None and cancel.is_set():
                 raise RunCancelled()
             response = connection.getresponse()
             length = response.getheader("Content-Length")
-            if length and length.isdigit() and int(length) > _MAX_BYTES:
+            if length and length.isdigit() and int(length) > max_bytes:
                 raise TransportError("Response is too large.")
             chunks: list[bytes] = []
-            remaining = _MAX_BYTES + 1
+            remaining = max_bytes + 1
             while remaining > 0:
                 chunk = response.read(min(65_536, remaining))
                 if not chunk:
@@ -207,7 +229,7 @@ class UrllibTransport:
                 chunks.append(chunk)
                 remaining -= len(chunk)
             payload = b"".join(chunks)
-            if len(payload) > _MAX_BYTES:
+            if len(payload) > max_bytes:
                 raise TransportError("Response is too large.")
             header_map = {key.lower(): value for key, value in response.getheaders()}
             return HttpResult(response.status, header_map, payload), response.getheader("Location")

@@ -1,6 +1,6 @@
 # Plugins
 
-Adapter boundaries. Manifests live in `@haizhu/node-sdk`. The `openai.chat` and `openai.image` HTTP clients live in `engine/app/adapters` (stdlib client, no extra package). This folder stays empty of vendored source.
+Adapter boundaries. Manifests live in `@haizhu/node-sdk`. The HTTP clients for OpenAI, ComfyUI, and Wan/Kling live in `engine/app/adapters` (stdlib client, no extra package). This folder stays empty of vendored source.
 
 | Directory (future) | Adapter | Boundary |
 | --- | --- | --- |

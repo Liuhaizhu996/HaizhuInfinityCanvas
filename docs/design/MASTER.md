@@ -72,5 +72,15 @@ One family only: **Phosphor** (preferred) or existing Lucide if already locked �
 4. Keep Week 1–3 behaviors (DnD, .hzcanvas, run pipeline) intact.
 5. shadcn/Radix primitives OK if restyled to these tokens — never ship default shadcn look.
 
+## Canvas interaction
+
+These patterns belong to Haizhu. They were informed by studying public creator-canvas products, and they are not a copy of any other brand, logo, or tool suite.
+
+- Empty canvas invites a local image drop, a double-click to pick a node, or a drag from the node library. Nothing runs until the user presses 运行.
+- A dropped image becomes an image node with a session-only preview. The bytes stay out of the `.hzcanvas` file.
+- A glass dock at the bottom center runs the selection, or the whole graph when nothing is selected. One press, no batch, no silent retry, no credit badge.
+- The bottom-right cluster arranges node positions (edges stay), shows the zoom percent, and fits the view.
+- A selected image, video, or audio node gets a slim bar: run that node, or focus the inspector. No retouch toolbelt.
+
 ## Scope for implementation agent
 See CloudAgent prompt. Persist this brief in `docs/design/MASTER.md` in the repo.

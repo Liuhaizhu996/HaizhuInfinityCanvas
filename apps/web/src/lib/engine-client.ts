@@ -12,11 +12,13 @@ export type NodeRunStatus =
 
 export type RunStatus = "running" | "succeeded" | "failed" | "cancelled";
 
-export type RunImageOutput = {
+export type RunMediaOutput = {
   relativePath: string;
   mediaType: string;
   url: string;
 };
+
+export type RunImageOutput = RunMediaOutput;
 
 export type RunSnapshot = {
   id: string;
@@ -31,7 +33,8 @@ export type RunSnapshot = {
       error: string | null;
       outputs: {
         text?: string;
-        image?: RunImageOutput;
+        image?: RunMediaOutput;
+        video?: RunMediaOutput;
       };
     }
   >;
@@ -40,6 +43,14 @@ export type RunSnapshot = {
 export type PublicSettings = {
   openaiBaseUrl: string;
   openaiApiKeySet: boolean;
+  comfyuiBaseUrl: string;
+  comfyuiApiKeySet: boolean;
+  wanBaseUrl: string;
+  wanApiKeySet: boolean;
+  klingBaseUrl: string;
+  klingAccessKeySet: boolean;
+  klingSecretKeySet: boolean;
+  klingApiKeySet: boolean;
   envFile: string;
 };
 
@@ -107,12 +118,28 @@ export async function getSettings(): Promise<PublicSettings> {
 export async function putSettings(input: {
   openaiBaseUrl: string;
   openaiApiKey?: string;
+  comfyuiBaseUrl: string;
+  comfyuiApiKey?: string;
+  wanBaseUrl: string;
+  wanApiKey?: string;
+  klingBaseUrl: string;
+  klingAccessKey?: string;
+  klingSecretKey?: string;
+  klingApiKey?: string;
 }): Promise<PublicSettings> {
   const response = await request("/settings", {
     method: "PUT",
     body: JSON.stringify({
       openaiBaseUrl: input.openaiBaseUrl,
       openaiApiKey: input.openaiApiKey ?? "",
+      comfyuiBaseUrl: input.comfyuiBaseUrl,
+      comfyuiApiKey: input.comfyuiApiKey ?? "",
+      wanBaseUrl: input.wanBaseUrl,
+      wanApiKey: input.wanApiKey ?? "",
+      klingBaseUrl: input.klingBaseUrl,
+      klingAccessKey: input.klingAccessKey ?? "",
+      klingSecretKey: input.klingSecretKey ?? "",
+      klingApiKey: input.klingApiKey ?? "",
     }),
   });
   return parseSettings(await response.json());
@@ -177,12 +204,31 @@ function parseSettings(value: unknown): PublicSettings {
     throw new EngineRequestError("引擎返回了无法识别的设置。", "invalid_response");
   }
   const record = value as Record<string, unknown>;
-  if (typeof record.openaiBaseUrl !== "string" || typeof record.openaiApiKeySet !== "boolean") {
+  if (
+    typeof record.openaiBaseUrl !== "string" ||
+    typeof record.openaiApiKeySet !== "boolean" ||
+    typeof record.comfyuiBaseUrl !== "string" ||
+    typeof record.comfyuiApiKeySet !== "boolean" ||
+    typeof record.wanBaseUrl !== "string" ||
+    typeof record.wanApiKeySet !== "boolean" ||
+    typeof record.klingBaseUrl !== "string" ||
+    typeof record.klingAccessKeySet !== "boolean" ||
+    typeof record.klingSecretKeySet !== "boolean" ||
+    typeof record.klingApiKeySet !== "boolean"
+  ) {
     throw new EngineRequestError("引擎返回了无法识别的设置。", "invalid_response");
   }
   return {
     openaiBaseUrl: record.openaiBaseUrl,
     openaiApiKeySet: record.openaiApiKeySet,
+    comfyuiBaseUrl: record.comfyuiBaseUrl,
+    comfyuiApiKeySet: record.comfyuiApiKeySet,
+    wanBaseUrl: record.wanBaseUrl,
+    wanApiKeySet: record.wanApiKeySet,
+    klingBaseUrl: record.klingBaseUrl,
+    klingAccessKeySet: record.klingAccessKeySet,
+    klingSecretKeySet: record.klingSecretKeySet,
+    klingApiKeySet: record.klingApiKeySet,
     envFile: typeof record.envFile === "string" ? record.envFile : "engine/.env",
   };
 }
@@ -238,16 +284,20 @@ function parseOutputs(value: unknown): RunSnapshot["nodes"][string]["outputs"] {
   const record = value as Record<string, unknown>;
   const outputs: RunSnapshot["nodes"][string]["outputs"] = {};
   if (typeof record.text === "string") outputs.text = record.text;
-  const image = record.image;
-  if (image && typeof image === "object") {
-    const imageRecord = image as Record<string, unknown>;
-    if (typeof imageRecord.relativePath === "string" && typeof imageRecord.url === "string") {
-      outputs.image = {
-        relativePath: imageRecord.relativePath,
-        mediaType: typeof imageRecord.mediaType === "string" ? imageRecord.mediaType : "image/png",
-        url: imageRecord.url,
-      };
-    }
-  }
+  const image = readMedia(record.image, "image/png");
+  if (image) outputs.image = image;
+  const video = readMedia(record.video, "video/mp4");
+  if (video) outputs.video = video;
   return outputs;
+}
+
+function readMedia(value: unknown, fallbackType: string): RunMediaOutput | undefined {
+  if (!value || typeof value !== "object") return undefined;
+  const record = value as Record<string, unknown>;
+  if (typeof record.relativePath !== "string" || typeof record.url !== "string") return undefined;
+  return {
+    relativePath: record.relativePath,
+    mediaType: typeof record.mediaType === "string" ? record.mediaType : fallbackType,
+    url: record.url,
+  };
 }

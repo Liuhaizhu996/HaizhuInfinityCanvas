@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { nodeCatalog, type NodeField } from "@haizhu/node-sdk";
+import { nodeCatalog, type FieldOption, type NodeField } from "@haizhu/node-sdk";
 import { assetUrl } from "@/lib/engine-client";
 import { readOutput } from "@/lib/flow-graph";
 import { runStatusClass, runStatusLabel } from "@/lib/run-status";
@@ -30,7 +30,10 @@ export function Inspector() {
   }
 
   return (
-    <aside className="hz-glass hz-rail absolute bottom-0 right-0 top-[var(--hz-top)] z-20 flex w-[var(--hz-inspector)] flex-col border-l border-border">
+    <aside
+      id="node-inspector"
+      className="hz-glass hz-rail absolute bottom-0 right-0 top-[var(--hz-top)] z-20 flex w-[var(--hz-inspector)] flex-col border-l border-border"
+    >
       <div className="border-b border-border px-4 py-3">
         <h2 className="text-[13px] font-medium">检查器</h2>
         <p className="mt-0.5 text-[12px] text-muted-foreground">参数写在画布文件里。密钥不写。</p>
@@ -96,6 +99,16 @@ export function Inspector() {
                 />
               ))}
             </div>
+            {definition.type === "comfyui.image" ? (
+              <p className="text-[12px] leading-relaxed text-muted-foreground">
+                地址留空则用设置里的地址。工作流用 ComfyUI 的 API 格式，不要把密钥贴进去。
+              </p>
+            ) : null}
+            {definition.type === "video.wan-kling" ? (
+              <p className="rounded-lg border border-primary/40 px-3 py-2 text-[12px] leading-relaxed text-foreground">
+                视频会向供应商计费。只有点击「运行」才提交这一次，失败不会自动重试。取消会停止轮询；对方如果已经接单，仍可能计费。
+              </p>
+            ) : null}
             {!definition.executable ? (
               <p className="rounded-lg border border-dashed border-border px-3 py-2 text-[12px] leading-relaxed text-muted-foreground">
                 这个节点可以保存和连线。当前引擎不会执行。
@@ -179,6 +192,23 @@ function CatalogField({
   onFocus: () => void;
   onCommit: (value: string | number | undefined) => void;
 }) {
+  if (field.kind === "select") {
+    const options = field.options ?? [];
+    const allowed = new Set(options.map((option) => option.value));
+    const fallback = typeof field.default === "string" ? field.default : options[0]?.value ?? "";
+    const shown = typeof value === "string" && allowed.has(value) ? value : fallback;
+    return (
+      <SelectField
+        label={field.label}
+        help={field.help}
+        value={shown}
+        options={options}
+        disabled={disabled}
+        onFocus={onFocus}
+        onChange={(next) => onCommit(next)}
+      />
+    );
+  }
   if (field.kind === "number") {
     return (
       <NumberField
@@ -204,6 +234,44 @@ function CatalogField({
       onFocus={onFocus}
       onChange={(next) => onCommit(next)}
     />
+  );
+}
+
+function SelectField({
+  label,
+  help,
+  value,
+  options,
+  disabled,
+  onFocus,
+  onChange,
+}: {
+  label: string;
+  help?: string;
+  value: string;
+  options: readonly FieldOption[];
+  disabled?: boolean;
+  onFocus: () => void;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <label className="block">
+      <span className="text-[12px] text-muted-foreground">{label}</span>
+      <select
+        className="hz-field mt-1"
+        value={value}
+        disabled={disabled}
+        onFocus={onFocus}
+        onChange={(event) => onChange(event.target.value)}
+      >
+        {options.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+      {help ? <span className="mt-1 block text-[10px] leading-relaxed text-muted-foreground">{help}</span> : null}
+    </label>
   );
 }
 

@@ -6,6 +6,7 @@ import { nodeCatalog, type NodeCategory } from "@haizhu/node-sdk";
 import { assetUrl } from "@/lib/engine-client";
 import type { AgentFlowNode, StoredOutput } from "@/lib/flow-graph";
 import { runStatusClass, runStatusLabel } from "@/lib/run-status";
+import { useCanvasStore } from "@/store/canvas";
 import { useRunStore } from "@/store/run";
 
 const widthFor: Record<NodeCategory, string> = {
@@ -18,6 +19,7 @@ const widthFor: Record<NodeCategory, string> = {
 
 export function AgentNode({ id, data }: NodeProps<AgentFlowNode>) {
   const live = useRunStore((state) => state.run?.nodes[id]);
+  const preview = useCanvasStore((state) => state.localPreviews[id]);
   const definition = nodeCatalog.find((item) => item.type === data.nodeType);
   const kind: NodeCategory = definition?.category ?? "llm";
   const inputs = data.ports.filter((port) => port.direction === "input");
@@ -44,7 +46,7 @@ export function AgentNode({ id, data }: NodeProps<AgentFlowNode>) {
         ) : null}
       </div>
       <div className="px-3 pt-2">
-        <MediaWell kind={kind} output={data.output} label={data.label} />
+        <MediaWell kind={kind} output={data.output} label={data.label} preview={preview} />
       </div>
       {live?.error ? (
         <p className="mt-2 line-clamp-3 px-3 text-[11px] leading-4 text-danger">{live.error}</p>
@@ -58,17 +60,29 @@ function MediaWell({
   kind,
   output,
   label,
+  preview,
 }: {
   kind: NodeCategory;
   output?: StoredOutput;
   label: string;
+  preview?: string;
 }) {
   if (kind === "image") {
-    return output?.image ? (
-      <div className="hz-well aspect-[16/10]">
-        <PreviewImage path={output.image.relativePath} alt={`${label}的画面`} />
-      </div>
-    ) : (
+    if (output?.image) {
+      return (
+        <div className="hz-well aspect-[16/10]">
+          <PreviewImage path={output.image.relativePath} alt={`${label}的画面`} />
+        </div>
+      );
+    }
+    if (preview) {
+      return (
+        <div className="hz-well aspect-[16/10]">
+          <img src={preview} alt={`${label}的本地预览`} draggable={false} className="h-full w-full object-contain" />
+        </div>
+      );
+    }
+    return (
       <EmptyWell aspect="aspect-[16/10]" icon={<ImageIcon size={20} aria-hidden />} label="尚无画面" />
     );
   }

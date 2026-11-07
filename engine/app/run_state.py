@@ -49,14 +49,20 @@ def _public_outputs(outputs: dict[str, Any]) -> dict[str, object]:
     text = outputs.get("text")
     if isinstance(text, str):
         body["text"] = text
-    image = outputs.get("image")
-    if isinstance(image, dict) and isinstance(image.get("relativePath"), str):
-        relative = image["relativePath"]
-        media = image.get("mediaType")
-        url = image.get("url")
-        body["image"] = {
-            "relativePath": relative,
-            "mediaType": media if isinstance(media, str) else "application/octet-stream",
-            "url": url if isinstance(url, str) else f"/assets/{relative}",
-        }
+    _put_media(body, outputs, "image", "application/octet-stream")
+    _put_media(body, outputs, "video", "video/mp4")
     return body
+
+
+def _put_media(body: dict[str, object], outputs: dict[str, Any], key: str, default_type: str) -> None:
+    value = outputs.get(key)
+    if not isinstance(value, dict) or not isinstance(value.get("relativePath"), str):
+        return
+    relative = value["relativePath"]
+    media = value.get("mediaType")
+    url = value.get("url")
+    body[key] = {
+        "relativePath": relative,
+        "mediaType": media if isinstance(media, str) else default_type,
+        "url": url if isinstance(url, str) else f"/assets/{relative}",
+    }
