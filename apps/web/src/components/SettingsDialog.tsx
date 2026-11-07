@@ -26,6 +26,8 @@ export function SettingsDialog() {
   const [klingAccessKey, setKlingAccessKey] = useState("");
   const [klingSecretKey, setKlingSecretKey] = useState("");
   const [klingApiKey, setKlingApiKey] = useState("");
+  const [cosyvoiceBaseUrl, setCosyvoiceBaseUrl] = useState("http://127.0.0.1:50000");
+  const [cosyvoiceApiKey, setCosyvoiceApiKey] = useState("");
   const [known, setKnown] = useState<PublicSettings | null>(null);
   const [offline, setOffline] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -42,6 +44,7 @@ export function SettingsDialog() {
     setKlingAccessKey("");
     setKlingSecretKey("");
     setKlingApiKey("");
+    setCosyvoiceApiKey("");
     setMessage(null);
     setError(null);
     setOffline(false);
@@ -54,6 +57,7 @@ export function SettingsDialog() {
         setComfyuiBaseUrl(settings.comfyuiBaseUrl);
         setWanBaseUrl(settings.wanBaseUrl);
         setKlingBaseUrl(settings.klingBaseUrl);
+        setCosyvoiceBaseUrl(settings.cosyvoiceBaseUrl);
         setOffline(false);
       } catch (caught) {
         if (cancelled) return;
@@ -81,7 +85,11 @@ export function SettingsDialog() {
   if (!open) return null;
 
   const basesReady =
-    openaiBaseUrl.trim() !== "" && comfyuiBaseUrl.trim() !== "" && wanBaseUrl.trim() !== "" && klingBaseUrl.trim() !== "";
+    openaiBaseUrl.trim() !== "" &&
+    comfyuiBaseUrl.trim() !== "" &&
+    wanBaseUrl.trim() !== "" &&
+    klingBaseUrl.trim() !== "" &&
+    cosyvoiceBaseUrl.trim() !== "";
 
   async function save() {
     setBusy(true);
@@ -99,6 +107,8 @@ export function SettingsDialog() {
         klingAccessKey: klingAccessKey.trim() || undefined,
         klingSecretKey: klingSecretKey.trim() || undefined,
         klingApiKey: klingApiKey.trim() || undefined,
+        cosyvoiceBaseUrl: cosyvoiceBaseUrl.trim(),
+        cosyvoiceApiKey: cosyvoiceApiKey.trim() || undefined,
       });
       setKnown(saved);
       setOpenaiApiKey("");
@@ -107,8 +117,9 @@ export function SettingsDialog() {
       setKlingAccessKey("");
       setKlingSecretKey("");
       setKlingApiKey("");
+      setCosyvoiceApiKey("");
       setOffline(false);
-      setMessage("已写入 engine/.env。密钥只留在本机 sidecar，不会进 .hzcanvas。保存不会发起视频请求。");
+      setMessage("已写入 engine/.env。密钥只留在本机 sidecar，不会进 .hzcanvas。保存不会发起视频或语音请求。");
       useRunStore.getState().clearRunBanner();
       await refreshHealth();
     } catch (caught) {
@@ -161,7 +172,9 @@ WAN_API_KEY=
 KLING_API_BASE=
 KLING_ACCESS_KEY=
 KLING_SECRET_KEY=
-KLING_API_KEY=`}</pre>
+KLING_API_KEY=
+COSYVOICE_BASE_URL=
+COSYVOICE_API_KEY=`}</pre>
           </div>
         ) : (
           <form
@@ -263,6 +276,26 @@ KLING_API_KEY=`}</pre>
               />
               <p className="text-[11px] text-muted-foreground">
                 Base 不要带 /v1。填了 API Key 时用它；否则用 Access Key 和 Secret Key 签一个短期 JWT。视频只有点「运行」才提交一次。
+              </p>
+            </section>
+            <section className="space-y-3">
+              <h3 className="text-xs font-medium">CosyVoice</h3>
+              <TextField
+                id="cosyvoice-base-url"
+                label="CosyVoice Base URL"
+                value={cosyvoiceBaseUrl}
+                placeholder="http://127.0.0.1:50000"
+                onChange={setCosyvoiceBaseUrl}
+              />
+              <SecretField
+                id="cosyvoice-api-key"
+                label="CosyVoice API Key"
+                value={cosyvoiceApiKey}
+                placeholder={known?.cosyvoiceApiKeySet ? "已设置，留空则不更改" : "本地服务通常留空"}
+                onChange={setCosyvoiceApiKey}
+              />
+              <p className="text-[11px] text-muted-foreground">
+                指向你自己启动的 CosyVoice HTTP 服务。官方示例端口是 50000。Edge 语音不需要密钥，这里也不填写。保存不会合成语音。
               </p>
             </section>
             <div className="flex justify-end gap-2">

@@ -37,6 +37,8 @@ def test_settings_file_and_adapter_status(tmp_path: Path) -> None:
         "klingAccessKeySet": False,
         "klingSecretKeySet": False,
         "klingApiKeySet": False,
+        "cosyvoiceBaseUrl": "http://127.0.0.1:9880",
+        "cosyvoiceApiKeySet": False,
         "envFile": "engine/.env",
     }
     assert "sk-test" not in before.text
@@ -45,14 +47,20 @@ def test_settings_file_and_adapter_status(tmp_path: Path) -> None:
     image = next(item for item in needs_key if item["type"] == "openai.image")
     comfy = next(item for item in needs_key if item["type"] == "comfyui.image")
     video = next(item for item in needs_key if item["type"] == "video.wan-kling")
-    edge = next(item for item in needs_key if item["type"] == "tts.edge")
+    edge_tts = next(item for item in needs_key if item["type"] == "tts.edge")
+    cosy = next(item for item in needs_key if item["type"] == "tts.cosyvoice")
+    story = next(item for item in needs_key if item["type"] == "storyboard.board")
     assert chat["status"] == "needs_key"
     assert image["implemented"] is True
     assert comfy["implemented"] is True
     assert comfy["status"] == "ready"
     assert video["implemented"] is True
     assert video["status"] == "needs_key"
-    assert edge["implemented"] is False
+    assert edge_tts["implemented"] is True
+    assert edge_tts["status"] == "ready"
+    assert cosy["implemented"] is True
+    assert cosy["status"] == "ready"
+    assert story["implemented"] is False
 
     saved = client.put(
         "/settings",
@@ -108,3 +116,16 @@ def test_settings_file_and_adapter_status(tmp_path: Path) -> None:
 
     blank_keeps_wan = client.put("/settings", json={"wanApiKey": ""})
     assert blank_keeps_wan.json()["wanApiKeySet"] is True
+
+    voice_saved = client.put(
+        "/settings",
+        json={"cosyvoiceBaseUrl": "http://voice.example.test:50000/", "cosyvoiceApiKey": "cv-secret"},
+    )
+    assert voice_saved.status_code == 200
+    assert voice_saved.json()["cosyvoiceBaseUrl"] == "http://voice.example.test:50000"
+    assert voice_saved.json()["cosyvoiceApiKeySet"] is True
+    assert "cv-secret" not in voice_saved.text
+    assert "sk-test" not in voice_saved.text
+    assert "cv-secret" in env_file.read_text(encoding="utf-8")
+    kept_voice = client.put("/settings", json={"cosyvoiceApiKey": ""})
+    assert kept_voice.json()["cosyvoiceApiKeySet"] is True

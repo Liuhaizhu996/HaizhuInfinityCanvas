@@ -456,6 +456,23 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
             changedEntries = true;
           }
         }
+        const audio = result.outputs.audio;
+        if (audio?.relativePath) {
+          const mediaType = audio.mediaType || "audio/mpeg";
+          output.audio = { relativePath: audio.relativePath, mediaType };
+          if (!entries.some((entry) => entry.relativePath === audio.relativePath)) {
+            entries = [
+              ...entries,
+              {
+                id: assetIdFor(run.id, `${node.id}-audio`),
+                relativePath: audio.relativePath,
+                kind: "audio" as const,
+                mediaType,
+              },
+            ];
+            changedEntries = true;
+          }
+        }
         if (Object.keys(output).length === 0) return node;
         return { ...node, data: { ...node.data, output } };
       });

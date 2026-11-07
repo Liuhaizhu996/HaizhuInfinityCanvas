@@ -10,6 +10,8 @@ from app.adapters.openai_chat import run_chat
 from app.adapters.openai_common import AdapterError
 from app.adapters.openai_image import run_image
 from app.adapters.transport import RunCancelled, Transport
+from app.adapters.tts_cosyvoice import run_cosyvoice
+from app.adapters.tts_edge import run_edge
 from app.adapters.video_wan_kling import run_video
 from app.catalog import EXECUTABLE_NODE_TYPES
 from app.config import SettingsStore
@@ -75,7 +77,7 @@ def _dispatch(
 ) -> dict[str, object]:
     if node.type not in EXECUTABLE_NODE_TYPES:
         raise AdapterError(
-            f"「{node.type}」还不能执行。当前可运行 openai.chat、openai.image、comfyui.image、video.wan-kling。"
+            f"「{node.type}」还不能执行。当前可运行 openai.chat、openai.image、comfyui.image、video.wan-kling、tts.edge、tts.cosyvoice。"
         )
     prompt = _input_text(node, graph, record)
     current = settings.get()
@@ -83,6 +85,26 @@ def _dispatch(
         return run_chat(node, prompt, current, transport, record.cancel)
     if node.type == "openai.image":
         return run_image(
+            node,
+            prompt,
+            current,
+            transport,
+            record.cancel,
+            run_id=record.id,
+            asset_root=asset_root,
+        )
+    if node.type == "tts.edge":
+        return run_edge(
+            node,
+            prompt,
+            current,
+            transport,
+            record.cancel,
+            run_id=record.id,
+            asset_root=asset_root,
+        )
+    if node.type == "tts.cosyvoice":
+        return run_cosyvoice(
             node,
             prompt,
             current,

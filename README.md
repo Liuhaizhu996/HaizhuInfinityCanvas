@@ -2,7 +2,7 @@
 
 `1.0.0-beta.1` · 私有 / All rights reserved
 
-无限画布上的多模型 Agent 工作流。当前版本 `1.0.0-beta.1`：可拖放的 Agent 库、`.hzcanvas` 保存、本地 FastAPI 跑一次对话、OpenAI 图像、本机 ComfyUI 或 Wan/Kling 视频。没有桌面安装包。语音仍是占位。
+无限画布上的多模型 Agent 工作流。当前版本 `1.0.0-beta.1`：可拖放的 Agent 库、`.hzcanvas` 保存、本地 FastAPI 跑一次对话、OpenAI 图像、本机 ComfyUI、Wan/Kling 视频，或文本转语音（Edge HTTP / 本机 CosyVoice）。没有桌面安装包。分镜仍是占位。
 
 ## 运行 Web
 
@@ -44,9 +44,11 @@ WAN_API_KEY=
 KLING_API_BASE=https://api.klingai.com
 KLING_ACCESS_KEY=
 KLING_SECRET_KEY=
+COSYVOICE_BASE_URL=http://127.0.0.1:50000
+COSYVOICE_API_KEY=
 ```
 
-对话和 OpenAI 图像共用 `OPENAI_*`。ComfyUI 指向你本机已经启动的服务。Wan 的 Base 要带 `/api/v1`，Kling 的 Base 不要带 `/v1`。进程环境变量在启动时优先于文件；网页保存之后，以 sidecar 内存里的新值为准，并写回 `engine/.env`。
+对话和 OpenAI 图像共用 `OPENAI_*`。ComfyUI 指向你本机已经启动的服务。Wan 的 Base 要带 `/api/v1`，Kling 的 Base 不要带 `/v1`。Edge 语音不需要密钥。CosyVoice 指向你自己启动的 HTTP 服务，密钥可留空。进程环境变量在启动时优先于文件；网页保存之后，以 sidecar 内存里的新值为准，并写回 `engine/.env`。
 
 ```bash
 .venv/bin/pytest
@@ -70,6 +72,13 @@ KLING_SECRET_KEY=
 
 工作流形状、轮询地址和密钥名称见 [engine/README.md](engine/README.md)。
 
+## 跑一次 文本 → 语音
+
+1. Edge 语音：从 Agent 库拖入「对话 LLM」和「Edge 语音」。把对话的 `text` 连到语音的 `text`。检查器里选地区、音色、语速和音高。不需要密钥，也不要安装 `edge-tts`。点一次「运行」。音频出现在节点上，也可以在检查器里播放或打开 sidecar 的 `/assets/audio/...`。
+2. CosyVoice：先在本机启动你自己的 CosyVoice HTTP 服务（官方 FastAPI 示例默认 `http://127.0.0.1:50000`）。在「设置」里填写 `COSYVOICE_BASE_URL`，本地服务一般不填密钥。拖入「CosyVoice」，音色填该服务已有的 `spk_id`（例如 `中文女`）。CosyVoice 2 若返回裸 PCM，把采样率改成 `24000`。点一次「运行」。
+
+取消会停掉正在进行的请求，并不再跑下游。失败不会自动重试。`.hzcanvas` 只记录 `audio/...` 路径，不记录密钥。
+
 ## 文档
 
 - [可行性](docs/research.md)
@@ -81,13 +90,13 @@ KLING_SECRET_KEY=
 
 ## English
 
-Private monorepo for a node-graph agent canvas. `1.0.0-beta.1` can drag agents, save `.hzcanvas`, and run one explicit pass for OpenAI chat, OpenAI image, a user-run ComfyUI, or Wan/Kling video. It does not build a desktop installer.
+Private monorepo for a node-graph agent canvas. `1.0.0-beta.1` can drag agents, save `.hzcanvas`, and run one explicit pass for OpenAI chat, OpenAI image, a user-run ComfyUI, Wan/Kling video, or text-to-speech (Edge HTTP or a user-run CosyVoice). It does not build a desktop installer.
 
-- Web: `pnpm install`, then `pnpm --filter web dev` → http://127.0.0.1:5173 . Drag agents, connect `text` → `prompt`, set the key in Settings, then Run once. See [docs/hzcanvas.md](docs/hzcanvas.md).
+- Web: `pnpm install`, then `pnpm --filter web dev` → http://127.0.0.1:5173 . Drag agents, connect `text` → `prompt` (or `text` → speech `text`), set keys in Settings, then Run once. See [docs/hzcanvas.md](docs/hzcanvas.md).
 - Schema tests: `pnpm --filter @haizhu/canvas-core test`
 - Engine: commands above. Health returns `{"ok":true,"version":"1.0.0-beta.1"}`. Endpoints and adapter status: [engine/README.md](engine/README.md).
-- Provider URLs and keys live in the environment or `engine/.env` (`OPENAI_*`, `COMFYUI_*`, `WAN_*`, `KLING_*`). The example file stays blank. The graph file never stores a key.
-- Still stubbed: Edge-TTS, CosyVoice, storyboard execution, batch runs, streaming, FFmpeg, Tauri. See `apps/desktop` and `plugins`.
+- Provider URLs and keys live in the environment or `engine/.env` (`OPENAI_*`, `COMFYUI_*`, `WAN_*`, `KLING_*`, `COSYVOICE_*`). Edge speech has no key. The example file stays blank. The graph file never stores a key.
+- Still stubbed: storyboard execution, batch runs, streaming chat, FFmpeg, Tauri. See `apps/desktop` and `plugins`.
 - Docs: feasibility, stack ADR, roadmap.
 
 ```

@@ -14,6 +14,7 @@ DEFAULT_OPENAI_BASE_URL = "https://api.openai.com/v1"
 DEFAULT_COMFYUI_BASE_URL = "http://127.0.0.1:8188"
 DEFAULT_WAN_BASE_URL = "https://dashscope.aliyuncs.com/api/v1"
 DEFAULT_KLING_BASE_URL = "https://api.klingai.com"
+DEFAULT_COSYVOICE_BASE_URL = "http://127.0.0.1:50000"
 _MANAGED_KEYS = (
     "OPENAI_BASE_URL",
     "OPENAI_API_KEY",
@@ -25,6 +26,8 @@ _MANAGED_KEYS = (
     "KLING_ACCESS_KEY",
     "KLING_SECRET_KEY",
     "KLING_API_KEY",
+    "COSYVOICE_BASE_URL",
+    "COSYVOICE_API_KEY",
 )
 _FILE_HEADER = (
     "# Local sidecar settings for Haizhu Infinity Canvas.",
@@ -45,6 +48,8 @@ class Settings:
     kling_access_key: str
     kling_secret_key: str
     kling_api_key: str
+    cosyvoice_base_url: str
+    cosyvoice_api_key: str
 
     def secret_values(self) -> tuple[str, ...]:
         values = (
@@ -54,6 +59,7 @@ class Settings:
             self.kling_access_key,
             self.kling_secret_key,
             self.kling_api_key,
+            self.cosyvoice_api_key,
         )
         unique = {item for item in values if item}
         return tuple(sorted(unique, key=len, reverse=True))
@@ -130,6 +136,11 @@ class SettingsStore:
         self._kling_access_key = merged.get("KLING_ACCESS_KEY", "").strip()
         self._kling_secret_key = merged.get("KLING_SECRET_KEY", "").strip()
         self._kling_api_key = merged.get("KLING_API_KEY", "").strip()
+        self._cosyvoice_base_url = _base_or_default(
+            merged.get("COSYVOICE_BASE_URL", ""),
+            DEFAULT_COSYVOICE_BASE_URL,
+        )
+        self._cosyvoice_api_key = merged.get("COSYVOICE_API_KEY", "").strip()
         self._extra = {key: value for key, value in file_values.items() if key not in _MANAGED_KEYS}
 
     def get(self) -> Settings:
@@ -152,17 +163,21 @@ class SettingsStore:
         kling_access_key: str | None = None,
         kling_secret_key: str | None = None,
         kling_api_key: str | None = None,
+        cosyvoice_base_url: str | None = None,
+        cosyvoice_api_key: str | None = None,
     ) -> dict[str, object]:
         new_openai_base = _clean_base(openai_base_url)
         new_comfy_base = _clean_base(comfyui_base_url)
         new_wan_base = _clean_base(wan_base_url)
         new_kling_base = _clean_base(kling_base_url)
+        new_cosy_base = _clean_base(cosyvoice_base_url)
         new_openai_key = _clean_secret(openai_api_key)
         new_comfy_key = _clean_secret(comfyui_api_key)
         new_wan_key = _clean_secret(wan_api_key)
         new_kling_access = _clean_secret(kling_access_key)
         new_kling_secret = _clean_secret(kling_secret_key)
         new_kling_api = _clean_secret(kling_api_key)
+        new_cosy_key = _clean_secret(cosyvoice_api_key)
         with self._lock:
             if new_openai_base is not None:
                 self._openai_base_url = new_openai_base
@@ -172,6 +187,8 @@ class SettingsStore:
                 self._wan_base_url = new_wan_base
             if new_kling_base is not None:
                 self._kling_base_url = new_kling_base
+            if new_cosy_base is not None:
+                self._cosyvoice_base_url = new_cosy_base
             if new_openai_key is not None:
                 self._openai_api_key = new_openai_key
             if new_comfy_key is not None:
@@ -184,6 +201,8 @@ class SettingsStore:
                 self._kling_secret_key = new_kling_secret
             if new_kling_api is not None:
                 self._kling_api_key = new_kling_api
+            if new_cosy_key is not None:
+                self._cosyvoice_api_key = new_cosy_key
             self._write_file_locked()
             return _public_view(self._snapshot_locked())
 
@@ -199,6 +218,8 @@ class SettingsStore:
             kling_access_key=self._kling_access_key,
             kling_secret_key=self._kling_secret_key,
             kling_api_key=self._kling_api_key,
+            cosyvoice_base_url=self._cosyvoice_base_url,
+            cosyvoice_api_key=self._cosyvoice_api_key,
         )
 
     def _write_file_locked(self) -> None:
@@ -214,6 +235,8 @@ class SettingsStore:
             "KLING_ACCESS_KEY": self._kling_access_key,
             "KLING_SECRET_KEY": self._kling_secret_key,
             "KLING_API_KEY": self._kling_api_key,
+            "COSYVOICE_BASE_URL": self._cosyvoice_base_url,
+            "COSYVOICE_API_KEY": self._cosyvoice_api_key,
         }
         lines = list(_FILE_HEADER)
         for key in _MANAGED_KEYS:
@@ -242,6 +265,8 @@ def _public_view(current: Settings) -> dict[str, object]:
         "klingAccessKeySet": bool(current.kling_access_key),
         "klingSecretKeySet": bool(current.kling_secret_key),
         "klingApiKeySet": bool(current.kling_api_key),
+        "cosyvoiceBaseUrl": current.cosyvoice_base_url,
+        "cosyvoiceApiKeySet": bool(current.cosyvoice_api_key),
         "envFile": "engine/.env",
     }
 

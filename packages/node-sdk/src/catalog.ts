@@ -1,9 +1,9 @@
 import { defineNode, type NodeDefinition } from "./define-node";
 
 /**
- * First-party manifests. Chat, image, ComfyUI, and Wan/Kling are executable.
- * Speech and storyboard stay in the library so a graph can be saved, but the
- * sidecar refuses to call them.
+ * First-party manifests. Chat, image, ComfyUI, video, and the two speech
+ * nodes are executable. Storyboard stays in the library so a graph can be
+ * saved, but the sidecar refuses to run it.
  */
 export const nodeCatalog: readonly NodeDefinition[] = [
   defineNode({
@@ -199,26 +199,117 @@ export const nodeCatalog: readonly NodeDefinition[] = [
   }),
   defineNode({
     type: "tts.edge",
-    title: "Edge-TTS",
+    title: "Edge 语音",
     category: "audio",
-    summary: "微软 Edge 在线语音。本周不会请求，也不链接 LGPL 的 edge-tts 包。",
-    executable: false,
-    fields: [],
+    summary: "微软 Edge 的语音 HTTP 接口。引擎自己提交 SSML，不安装、不导入 LGPL 的 edge-tts。点一次「运行」合成一段音频。",
+    executable: true,
     ports: [
       { id: "text", name: "text", direction: "input", dataType: "text" },
       { id: "audio", name: "audio", direction: "output", dataType: "audio" },
+    ],
+    fields: [
+      {
+        key: "prompt",
+        label: "文本",
+        kind: "textarea",
+        placeholder: "连上上游文本时，以上游为准。",
+      },
+      {
+        key: "locale",
+        label: "地区",
+        kind: "select",
+        default: "zh-CN",
+        options: [
+          { value: "zh-CN", label: "普通话 zh-CN" },
+          { value: "zh-HK", label: "粤语 zh-HK" },
+          { value: "zh-TW", label: "台湾 zh-TW" },
+          { value: "en-US", label: "英语（美）en-US" },
+          { value: "en-GB", label: "英语（英）en-GB" },
+          { value: "ja-JP", label: "日语 ja-JP" },
+          { value: "ko-KR", label: "韩语 ko-KR" },
+        ],
+        help: "应与音色名前缀一致，例如 zh-CN 配 zh-CN-XiaoxiaoNeural。",
+      },
+      {
+        key: "voice",
+        label: "音色",
+        kind: "text",
+        default: "zh-CN-XiaoxiaoNeural",
+        help: "微软神经语音名。这不是密钥。",
+      },
+      {
+        key: "rate",
+        label: "语速",
+        kind: "number",
+        default: 0,
+        help: "相对百分比，-50 到 100。0 为正常语速。",
+      },
+      {
+        key: "pitch",
+        label: "音高",
+        kind: "number",
+        default: 0,
+        help: "单位 Hz，-50 到 50。0 为默认音高。",
+      },
+      {
+        key: "timeoutSec",
+        label: "超时（秒）",
+        kind: "number",
+        help: "留空为 120。到点停止这一次请求，不会自动重试。",
+      },
     ],
   }),
   defineNode({
     type: "tts.cosyvoice",
     title: "CosyVoice",
     category: "audio",
-    summary: "本地 CosyVoice HTTP 服务（Apache-2.0）。本周不会连接。",
-    executable: false,
-    fields: [],
+    summary: "你本机另开的 CosyVoice HTTP 服务（Apache-2.0）。引擎只 POST /inference_sft。不内置权重，也不上传参考音频。",
+    executable: true,
     ports: [
       { id: "text", name: "text", direction: "input", dataType: "text" },
       { id: "audio", name: "audio", direction: "output", dataType: "audio" },
+    ],
+    fields: [
+      {
+        key: "prompt",
+        label: "文本",
+        kind: "textarea",
+        placeholder: "连上上游文本时，以上游为准。",
+      },
+      {
+        key: "baseUrl",
+        label: "服务地址",
+        kind: "text",
+        placeholder: "http://127.0.0.1:50000",
+        help: "留空则用设置里的 COSYVOICE_BASE_URL。这不是密钥。",
+      },
+      {
+        key: "voice",
+        label: "音色",
+        kind: "text",
+        default: "中文女",
+        help: "spk_id，必须是该服务已经加载的说话人。不做零样本克隆。",
+      },
+      {
+        key: "speed",
+        label: "语速",
+        kind: "number",
+        default: 1,
+        help: "0.5 到 2。会作为 speed 提交。官方 /inference_sft 会忽略这项。",
+      },
+      {
+        key: "sampleRate",
+        label: "采样率",
+        kind: "number",
+        default: 22050,
+        help: "仅当响应是裸 PCM 时用来包成 WAV。CosyVoice 1 多为 22050，CosyVoice 2 多为 24000。",
+      },
+      {
+        key: "timeoutSec",
+        label: "超时（秒）",
+        kind: "number",
+        help: "留空为 120。到点停止这一次请求，不会自动重试。",
+      },
     ],
   }),
   defineNode({

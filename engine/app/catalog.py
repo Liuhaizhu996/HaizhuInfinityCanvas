@@ -11,6 +11,8 @@ EXECUTABLE_NODE_TYPES = frozenset(
         "openai.image",
         "comfyui.image",
         "video.wan-kling",
+        "tts.edge",
+        "tts.cosyvoice",
     }
 )
 
@@ -20,8 +22,8 @@ _SPECS: tuple[tuple[str, str, bool, str], ...] = (
     ("openai.image", "text→image", True, "openai"),
     ("comfyui.image", "text→image", True, "none"),
     ("video.wan-kling", "text+image→video", True, "video"),
-    ("tts.edge", "text→audio", False, "none"),
-    ("tts.cosyvoice", "text→audio", False, "none"),
+    ("tts.edge", "text→audio", True, "none"),
+    ("tts.cosyvoice", "text→audio", True, "none"),
     ("storyboard.board", "text→storyboard", False, "none"),
 )
 

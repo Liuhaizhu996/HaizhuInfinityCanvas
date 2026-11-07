@@ -92,9 +92,19 @@ export function Inspector() {
                 视频会向 Wan 或 Kling 计费。只有点击「运行」才会提交这一次，失败不会自动重试。取消会停止轮询且不再跑下游；供应商如果已经接单，仍可能计费。
               </p>
             ) : null}
+            {definition.type === "tts.edge" ? (
+              <p className="text-[11px] leading-relaxed text-muted-foreground">
+                不需要密钥，也不使用 edge-tts 包。点一次「运行」才会向微软的语音接口提交这一段文本。取消或超时都不会再跑下游。
+              </p>
+            ) : null}
+            {definition.type === "tts.cosyvoice" ? (
+              <p className="text-[11px] leading-relaxed text-muted-foreground">
+                地址留空则用设置里的 COSYVOICE_BASE_URL。密钥只在「设置」里。不会把参考音频发给服务，也不会把密钥写进画布。
+              </p>
+            ) : null}
             {!definition.executable ? (
               <p className="rounded-md border border-dashed border-border px-3 py-2 text-xs leading-relaxed text-muted-foreground">
-                这个节点本周不会执行。可运行的是对话、OpenAI 图像、ComfyUI 和视频。
+                这个节点本周不会执行。可运行的是对话、OpenAI 图像、ComfyUI、视频和两种语音。
               </p>
             ) : null}
             {running ? (
@@ -130,6 +140,26 @@ export function Inspector() {
                   className="hz-preview mt-1"
                 />
                 <p className="mt-1 font-mono text-[10px] text-muted-foreground">{output.video.relativePath}</p>
+              </div>
+            ) : null}
+            {output?.audio ? (
+              <div>
+                <div className="text-[11px] text-muted-foreground">输出</div>
+                <audio
+                  src={assetUrl(output.audio.relativePath)}
+                  controls
+                  preload="metadata"
+                  className="nodrag nopan hz-audio mt-1"
+                />
+                <a
+                  className="mt-1 inline-block text-[10px] text-primary underline"
+                  href={assetUrl(output.audio.relativePath)}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  打开音频
+                </a>
+                <p className="mt-1 font-mono text-[10px] text-muted-foreground">{output.audio.relativePath}</p>
               </div>
             ) : null}
           </form>

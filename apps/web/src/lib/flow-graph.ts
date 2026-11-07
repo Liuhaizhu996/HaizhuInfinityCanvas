@@ -14,6 +14,7 @@ export type StoredOutput = {
   text?: string;
   image?: StoredMediaOutput;
   video?: StoredMediaOutput;
+  audio?: StoredMediaOutput;
 };
 
 export type AgentNodeData = {
@@ -42,7 +43,9 @@ export function readOutput(data: Record<string, unknown>): StoredOutput | undefi
   if (image) result.image = image;
   const video = readStoredMedia(record.video);
   if (video) result.video = video;
-  if (!result.text && !result.image && !result.video) return undefined;
+  const audio = readStoredMedia(record.audio);
+  if (audio) result.audio = audio;
+  if (!result.text && !result.image && !result.video && !result.audio) return undefined;
   return result;
 }
 

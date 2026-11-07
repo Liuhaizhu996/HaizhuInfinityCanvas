@@ -51,6 +51,7 @@ def _public_outputs(outputs: dict[str, Any]) -> dict[str, object]:
         body["text"] = text
     _put_media(body, outputs, "image", "application/octet-stream")
     _put_media(body, outputs, "video", "video/mp4")
+    _put_media(body, outputs, "audio", "audio/mpeg")
     return body
 
 
