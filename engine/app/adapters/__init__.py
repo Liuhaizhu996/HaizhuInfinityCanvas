@@ -1,1 +1,1 @@
-"""First-party sidecar adapters. TTS is not imported here."""
+"""First-party sidecar adapters. Speech clients live in tts_edge and tts_cosyvoice."""

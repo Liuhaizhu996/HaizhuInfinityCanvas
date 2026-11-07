@@ -105,6 +105,14 @@ export function AgentNode({ id, data }: NodeProps<AgentFlowNode>) {
           className="hz-preview mt-2"
         />
       ) : null}
+      {data.output?.audio ? (
+        <audio
+          src={assetUrl(data.output.audio.relativePath)}
+          controls
+          preload="metadata"
+          className="nodrag nopan hz-audio mt-2"
+        />
+      ) : null}
     </div>
   );
 }

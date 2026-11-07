@@ -1,13 +1,15 @@
-"""Run cache for image and video bytes.
+"""Run cache for image, video, and audio bytes.
 
 Paths use the same relative shape as `.hzcanvas` assets (`images/frame.png`,
-`videos/clip.mp4`). The browser still does not write the sibling
-`*.hzcanvas.assets` directory. This cache is `engine/var/assets/` and is gitignored.
+`videos/clip.mp4`, `audio/line.mp3`). The browser still does not write the
+sibling `*.hzcanvas.assets` directory. This cache is `engine/var/assets/` and
+is gitignored.
 """
 
 from __future__ import annotations
 
 import re
+import struct
 from pathlib import Path
 
 IMAGE_TYPES = {
@@ -20,10 +22,15 @@ VIDEO_TYPES = {
     ".mp4": "video/mp4",
     ".webm": "video/webm",
 }
-MEDIA_TYPES = {**IMAGE_TYPES, **VIDEO_TYPES}
+AUDIO_TYPES = {
+    ".mp3": "audio/mpeg",
+    ".wav": "audio/wav",
+}
+MEDIA_TYPES = {**IMAGE_TYPES, **VIDEO_TYPES, **AUDIO_TYPES}
 
 MAX_IMAGE_BYTES = 25 * 1024 * 1024
 MAX_VIDEO_BYTES = 80 * 1024 * 1024
+MAX_AUDIO_BYTES = 25 * 1024 * 1024
 
 
 def is_safe_relative_path(value: str) -> bool:
@@ -74,6 +81,52 @@ def sniff_video(data: bytes, header_type: str | None) -> tuple[str, str]:
     raise ValueError("Video response was not an MP4 or WebM.")
 
 
+def sniff_audio(data: bytes, header_type: str | None) -> tuple[str, str]:
+    """Accept MP3 or WAV. A bare frame sync counts only when the server says MPEG.
+
+    Raw PCM often contains 0xFF bytes. Those bytes are not treated as MP3
+    unless the response content type is audio/mpeg or audio/mp3. ID3 and
+    RIFF/WAVE are accepted on their own.
+    """
+    if len(data) >= 12 and data.startswith(b"RIFF") and data[8:12] == b"WAVE":
+        return "audio/wav", ".wav"
+    if len(data) >= 10 and data.startswith(b"ID3"):
+        return "audio/mpeg", ".mp3"
+    header = (header_type or "").split(";", 1)[0].strip().lower()
+    if header in {"audio/mpeg", "audio/mp3"} and _mp3_frame(data):
+        return "audio/mpeg", ".mp3"
+    raise ValueError("Audio response was not an MP3 or WAV.")
+
+
+def pcm16_to_wav(pcm: bytes, sample_rate: int) -> bytes:
+    """Wrap mono signed 16-bit little-endian PCM in a WAV header. No FFmpeg."""
+    if sample_rate < 8000 or sample_rate > 48000:
+        raise ValueError("Sample rate is invalid.")
+    if len(pcm) < 2 or len(pcm) % 2 != 0:
+        raise ValueError("PCM length is not a whole number of 16-bit samples.")
+    channels = 1
+    bits = 16
+    byte_rate = sample_rate * channels * bits // 8
+    block_align = channels * bits // 8
+    header = struct.pack(
+        "<4sI4s4sIHHIIHH4sI",
+        b"RIFF",
+        36 + len(pcm),
+        b"WAVE",
+        b"fmt ",
+        16,
+        1,
+        channels,
+        sample_rate,
+        byte_rate,
+        block_align,
+        bits,
+        b"data",
+        len(pcm),
+    )
+    return header + pcm
+
+
 def write_asset(root: Path, relative: str, data: bytes) -> None:
     if not is_safe_relative_path(relative):
         raise ValueError("Unsafe asset path.")
@@ -119,6 +172,13 @@ def media_type_for(path: Path) -> str:
 
 
 def _limit_for(relative: str) -> int:
-    if Path(relative).suffix.lower() in VIDEO_TYPES:
+    suffix = Path(relative).suffix.lower()
+    if suffix in VIDEO_TYPES:
         return MAX_VIDEO_BYTES
+    if suffix in AUDIO_TYPES:
+        return MAX_AUDIO_BYTES
     return MAX_IMAGE_BYTES
+
+
+def _mp3_frame(data: bytes) -> bool:
+    return len(data) >= 2 and data[0] == 0xFF and (data[1] & 0xE0) == 0xE0

@@ -133,6 +133,14 @@ describe("project document", () => {
       },
     };
     expect(deserializeProject(JSON.stringify(videoEntry)).success).toBe(true);
+    const audioEntry: ProjectDocument = {
+      ...project,
+      assets: {
+        directory: "Demo.hzcanvas.assets",
+        entries: [{ id: "line", relativePath: "audio/line.mp3", kind: "audio", mediaType: "audio/mpeg" }],
+      },
+    };
+    expect(deserializeProject(JSON.stringify(audioEntry)).success).toBe(true);
 
     const duplicateIds: ProjectDocument = {
       ...project,

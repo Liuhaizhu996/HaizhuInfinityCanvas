@@ -43,7 +43,14 @@ VIDEO_PORTS = [
     {"id": "video", "name": "video", "direction": "output", "dataType": "video"},
 ]
 
+SPEECH_PORTS = [
+    {"id": "text", "name": "text", "direction": "input", "dataType": "text"},
+    {"id": "audio", "name": "audio", "direction": "output", "dataType": "audio"},
+]
+
 MP4_BYTES = bytes.fromhex("000000186674797069736f6d0000000069736f6d6d703432")
+MP3_BYTES = b"ID3\x04\x00\x00\x00\x00\x00\x00" + b"\xff\xfb\x90\x00" + b"\x00" * 32
+PCM_BYTES = b"\x01\x00" * 32
 
 
 def node(node_id: str, node_type: str, ports: list[dict[str, str]], **data: object) -> dict[str, object]:
@@ -70,6 +77,14 @@ def comfy_node(node_id: str, **data: object) -> dict[str, object]:
 
 def video_node(node_id: str, **data: object) -> dict[str, object]:
     return node(node_id, "video.wan-kling", VIDEO_PORTS, **data)
+
+
+def edge_tts_node(node_id: str, **data: object) -> dict[str, object]:
+    return node(node_id, "tts.edge", SPEECH_PORTS, **data)
+
+
+def cosy_node(node_id: str, **data: object) -> dict[str, object]:
+    return node(node_id, "tts.cosyvoice", SPEECH_PORTS, **data)
 
 
 def edge(edge_id: str, source: str, target: str, source_port: str = "text", target_port: str = "prompt") -> dict[str, str]:

@@ -113,6 +113,12 @@ body {
   background: oklch(0.16 0.02 230);
 }
 
+.hz-audio {
+  display: block;
+  width: 100%;
+  height: 32px;
+}
+
 .react-flow {
   --xy-background-color: transparent;
   --xy-node-background-color: var(--card);

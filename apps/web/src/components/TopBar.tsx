@@ -64,7 +64,7 @@ export function TopBar() {
             </span>
           </div>
           <p className="text-[11px] text-muted-foreground">
-            v{APP_VERSION} · 可运行对话、图像、ComfyUI 与视频
+            v{APP_VERSION} · 可运行对话、图像、ComfyUI、视频与语音
             {phase === "online" ? " · 引擎在线" : phase === "offline" ? " · 引擎未连接" : ""}
           </p>
         </div>

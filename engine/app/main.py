@@ -78,6 +78,8 @@ def create_app(
             kling_access_key=_optional_text(payload, "klingAccessKey"),
             kling_secret_key=_optional_text(payload, "klingSecretKey"),
             kling_api_key=_optional_text(payload, "klingApiKey"),
+            cosyvoice_base_url=_optional_text(payload, "cosyvoiceBaseUrl"),
+            cosyvoice_api_key=_optional_text(payload, "cosyvoiceApiKey"),
         )
 
     @app.post("/runs", status_code=202)

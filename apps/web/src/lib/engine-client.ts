@@ -35,6 +35,7 @@ export type RunSnapshot = {
         text?: string;
         image?: RunMediaOutput;
         video?: RunMediaOutput;
+        audio?: RunMediaOutput;
       };
     }
   >;
@@ -51,6 +52,8 @@ export type PublicSettings = {
   klingAccessKeySet: boolean;
   klingSecretKeySet: boolean;
   klingApiKeySet: boolean;
+  cosyvoiceBaseUrl: string;
+  cosyvoiceApiKeySet: boolean;
   envFile: string;
 };
 
@@ -112,6 +115,8 @@ export async function putSettings(input: {
   klingAccessKey?: string;
   klingSecretKey?: string;
   klingApiKey?: string;
+  cosyvoiceBaseUrl: string;
+  cosyvoiceApiKey?: string;
 }): Promise<PublicSettings> {
   const response = await request("/settings", {
     method: "PUT",
@@ -126,6 +131,8 @@ export async function putSettings(input: {
       klingAccessKey: input.klingAccessKey ?? "",
       klingSecretKey: input.klingSecretKey ?? "",
       klingApiKey: input.klingApiKey ?? "",
+      cosyvoiceBaseUrl: input.cosyvoiceBaseUrl,
+      cosyvoiceApiKey: input.cosyvoiceApiKey ?? "",
     }),
   });
   return parseSettings(await response.json());
@@ -200,7 +207,9 @@ function parseSettings(value: unknown): PublicSettings {
     typeof record.klingBaseUrl !== "string" ||
     typeof record.klingAccessKeySet !== "boolean" ||
     typeof record.klingSecretKeySet !== "boolean" ||
-    typeof record.klingApiKeySet !== "boolean"
+    typeof record.klingApiKeySet !== "boolean" ||
+    typeof record.cosyvoiceBaseUrl !== "string" ||
+    typeof record.cosyvoiceApiKeySet !== "boolean"
   ) {
     throw new EngineRequestError("引擎返回了无法识别的设置。", "invalid_response");
   }
@@ -215,6 +224,8 @@ function parseSettings(value: unknown): PublicSettings {
     klingAccessKeySet: record.klingAccessKeySet,
     klingSecretKeySet: record.klingSecretKeySet,
     klingApiKeySet: record.klingApiKeySet,
+    cosyvoiceBaseUrl: record.cosyvoiceBaseUrl,
+    cosyvoiceApiKeySet: record.cosyvoiceApiKeySet,
     envFile: typeof record.envFile === "string" ? record.envFile : "engine/.env",
   };
 }
@@ -274,6 +285,8 @@ function parseOutputs(value: unknown): RunSnapshot["nodes"][string]["outputs"] {
   if (image) outputs.image = image;
   const video = readMedia(record.video, "video/mp4");
   if (video) outputs.video = video;
+  const audio = readMedia(record.audio, "audio/mpeg");
+  if (audio) outputs.audio = audio;
   return outputs;
 }
 

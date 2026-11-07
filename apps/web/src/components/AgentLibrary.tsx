@@ -53,7 +53,7 @@ export function AgentLibrary() {
         ))}
       </div>
       <p className="border-t border-border px-4 py-3 text-[11px] leading-relaxed text-muted-foreground">
-        对话、OpenAI 图像、ComfyUI 和 Wan/Kling 由本地引擎执行。视频会计费，只有点「运行」才提交一次。语音和分镜仍是占位。
+        对话、图像、ComfyUI、视频和两种语音由本地引擎执行。点一次「运行」。视频会计费。分镜仍是占位。
       </p>
     </aside>
   );
