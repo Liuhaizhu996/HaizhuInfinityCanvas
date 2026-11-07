@@ -16,7 +16,7 @@ from app.catalog import adapter_catalog
 from app.config import SettingsStore, default_asset_root, default_env_file
 from app.errors import ApiError
 from app.runs import RunManager
-from app.version import read_version
+from app.version import GRAPH_DOCUMENT_VERSION, read_version
 
 _RUN_ID = re.compile(r"^[A-Za-z0-9_-]{1,80}$")
 
@@ -34,7 +34,7 @@ def create_app(
         settings=settings,
         transport=transport or UrllibTransport(),
         asset_root=root,
-        version=version,
+        version=GRAPH_DOCUMENT_VERSION,
     )
     app = FastAPI(title="Haizhu Infinity Canvas Engine", version=version)
     app.add_middleware(

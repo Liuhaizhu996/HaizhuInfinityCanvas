@@ -12,7 +12,7 @@ from fastapi.testclient import TestClient
 
 from app.adapters.transport import HttpResult, RunCancelled, UrllibTransport, abort
 from app.main import create_app
-from app.version import read_version
+from app.version import GRAPH_DOCUMENT_VERSION, read_version
 from tests.support import (
     PNG_BYTES,
     STORYBOARD_PORTS,
@@ -62,7 +62,7 @@ def test_cycle_is_rejected_before_a_run_starts(tmp_path: Path) -> None:
     body = graph(
         [chat_node("a", prompt="one"), chat_node("b", prompt="two")],
         [edge("e1", "a", "b"), edge("e2", "b", "a")],
-        version=VERSION,
+        version=GRAPH_DOCUMENT_VERSION,
     )
     response = client.post("/runs", json={"graph": body})
     assert response.status_code == 422
@@ -82,7 +82,7 @@ def test_cycle_outside_the_selection_does_not_block_a_dag(tmp_path: Path) -> Non
     body = graph(
         [chat_node("a", prompt="loop"), chat_node("b", prompt="loop"), chat_node("c", prompt="alone")],
         [edge("e1", "a", "b"), edge("e2", "b", "a")],
-        version=VERSION,
+        version=GRAPH_DOCUMENT_VERSION,
     )
     refused = client.post("/runs", json={"graph": body})
     assert refused.status_code == 422
@@ -115,7 +115,7 @@ def test_chat_then_image_happy_path(tmp_path: Path) -> None:
             image_node("img", model="dall-e-3", size="1024x1024"),
         ],
         [edge("e1", "llm", "img")],
-        version=VERSION,
+        version=GRAPH_DOCUMENT_VERSION,
     )
     created = client.post("/runs", json={"graph": body})
     assert created.status_code == 202
@@ -161,7 +161,7 @@ def test_image_url_is_downloaded_without_the_api_key(tmp_path: Path) -> None:
 
     client, _transport = _client(tmp_path, FakeTransport(handler))
     _save_key(client)
-    body = graph([image_node("img", prompt="a circle", model="gpt-image-1")], [], version=VERSION)
+    body = graph([image_node("img", prompt="a circle", model="gpt-image-1")], [], version=GRAPH_DOCUMENT_VERSION)
     created = client.post("/runs", json={"graph": body})
     finished = wait_run(client, created.json()["id"])
     assert finished["status"] == "succeeded"
@@ -175,7 +175,7 @@ def test_provider_error_hides_the_api_key(tmp_path: Path) -> None:
 
     client, _transport = _client(tmp_path, FakeTransport(handler))
     _save_key(client, "sk-test")
-    body = graph([chat_node("llm", prompt="hello")], [], version=VERSION)
+    body = graph([chat_node("llm", prompt="hello")], [], version=GRAPH_DOCUMENT_VERSION)
     created = client.post("/runs", json={"graph": body})
     finished = wait_run(client, created.json()["id"])
     assert finished["status"] == "failed"
@@ -204,7 +204,7 @@ def test_cancel_stops_the_in_flight_node_and_skips_the_rest(tmp_path: Path) -> N
     body = graph(
         [chat_node("llm", prompt="wait"), image_node("img")],
         [edge("e1", "llm", "img")],
-        version=VERSION,
+        version=GRAPH_DOCUMENT_VERSION,
     )
     created = client.post("/runs", json={"graph": body})
     assert created.status_code == 202
@@ -225,7 +225,7 @@ def test_cancel_stops_the_in_flight_node_and_skips_the_rest(tmp_path: Path) -> N
 
 def test_missing_key_and_stub_adapter(tmp_path: Path) -> None:
     client, transport = _client(tmp_path)
-    body = graph([chat_node("llm", prompt="hello")], [], version=VERSION)
+    body = graph([chat_node("llm", prompt="hello")], [], version=GRAPH_DOCUMENT_VERSION)
     missing = client.post("/runs", json={"graph": body})
     assert missing.status_code == 422
     assert missing.json()["error"] == "missing_credentials"
@@ -238,7 +238,7 @@ def test_missing_key_and_stub_adapter(tmp_path: Path) -> None:
             node("board", "storyboard.board", STORYBOARD_PORTS),
         ],
         [edge("e1", "llm", "board")],
-        version=VERSION,
+        version=GRAPH_DOCUMENT_VERSION,
     )
 
     def handler(_call: dict[str, object], _cancel: threading.Event | None) -> HttpResult:
@@ -257,7 +257,7 @@ def test_missing_key_and_stub_adapter(tmp_path: Path) -> None:
 def test_empty_prompt_does_not_call_the_provider(tmp_path: Path) -> None:
     client, transport = _client(tmp_path)
     _save_key(client)
-    body = graph([chat_node("llm")], [], version=VERSION)
+    body = graph([chat_node("llm")], [], version=GRAPH_DOCUMENT_VERSION)
     created = client.post("/runs", json={"graph": body})
     finished = wait_run(client, created.json()["id"])
     assert finished["status"] == "failed"
@@ -343,7 +343,7 @@ def test_invalid_connection_is_rejected(tmp_path: Path) -> None:
         {"id": "prompt", "name": "prompt", "direction": "input", "dataType": "image"},
         {"id": "image", "name": "image", "direction": "output", "dataType": "image"},
     ]
-    body = graph([chat_node("llm", prompt="x"), img], [edge("e1", "llm", "img")], version=VERSION)
+    body = graph([chat_node("llm", prompt="x"), img], [edge("e1", "llm", "img")], version=GRAPH_DOCUMENT_VERSION)
     response = client.post("/runs", json={"graph": body})
     assert response.status_code == 422
     assert response.json()["error"] == "invalid_graph"
@@ -362,7 +362,7 @@ def test_ancestors_are_included_when_a_downstream_node_is_selected(tmp_path: Pat
     body = graph(
         [chat_node("a", prompt="one"), chat_node("b"), chat_node("c")],
         [edge("e1", "a", "b"), edge("e2", "b", "c")],
-        version=VERSION,
+        version=GRAPH_DOCUMENT_VERSION,
     )
     created = client.post("/runs", json={"graph": body, "nodeIds": ["c"]})
     finished = wait_run(client, created.json()["id"])
@@ -375,10 +375,10 @@ def test_ancestors_are_included_when_a_downstream_node_is_selected(tmp_path: Pat
 @pytest.mark.parametrize(
     ("payload", "code"),
     [
-        ({"graph": {"id": "g", "name": "Demo", "version": VERSION, "nodes": [], "edges": []}}, "empty_graph"),
+        ({"graph": {"id": "g", "name": "Demo", "version": GRAPH_DOCUMENT_VERSION, "nodes": [], "edges": []}}, "empty_graph"),
         (
             {
-                "graph": graph([chat_node("a", prompt="x")], [], version=VERSION),
+                "graph": graph([chat_node("a", prompt="x")], [], version=GRAPH_DOCUMENT_VERSION),
                 "nodeIds": [],
             },
             "empty_selection",

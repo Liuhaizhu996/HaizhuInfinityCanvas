@@ -1,6 +1,6 @@
 {
   "name": "web",
-  "version": "1.0.0-beta.1",
+  "version": "1.0.0-beta.2",
   "private": true,
   "license": "UNLICENSED",
   "type": "module",
@@ -11,9 +11,13 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@fontsource/jetbrains-mono": "^5.3.0",
+    "@fontsource/outfit": "^5.3.0",
+    "@fontsource/work-sans": "^5.3.0",
     "@haizhu/canvas-core": "workspace:*",
     "@haizhu/node-sdk": "workspace:*",
     "@haizhu/ui": "workspace:*",
+    "@phosphor-icons/react": "^2.1.10",
     "@xyflow/react": "^12.12.1",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",

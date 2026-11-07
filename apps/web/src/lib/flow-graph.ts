@@ -1,16 +1,19 @@
-import type { Graph, GraphEdge, GraphNode, Port } from "@haizhu/canvas-core";
+import type { Graph, GraphEdge, GraphNode, Port, PortDataType } from "@haizhu/canvas-core";
 import type { Edge, Node } from "@xyflow/react";
+import { portColor } from "@/lib/ports";
 
 export const AGENT_NODE_TYPE = "agent" as const;
 
-export type StoredImageOutput = {
+export type StoredMediaOutput = {
   relativePath: string;
   mediaType?: string;
 };
 
 export type StoredOutput = {
   text?: string;
-  image?: StoredImageOutput;
+  image?: StoredMediaOutput;
+  video?: StoredMediaOutput;
+  audio?: StoredMediaOutput;
 };
 
 export type AgentNodeData = {
@@ -29,23 +32,29 @@ export function readLabel(node: GraphNode): string {
   return typeof label === "string" && label.trim() ? label : node.type;
 }
 
+function readMedia(value: unknown): StoredMediaOutput | undefined {
+  if (!value || typeof value !== "object") return undefined;
+  const record = value as Record<string, unknown>;
+  if (typeof record.relativePath !== "string" || !record.relativePath) return undefined;
+  return {
+    relativePath: record.relativePath,
+    mediaType: typeof record.mediaType === "string" ? record.mediaType : undefined,
+  };
+}
+
 export function readOutput(data: Record<string, unknown>): StoredOutput | undefined {
   const output = data.output;
   if (!output || typeof output !== "object") return undefined;
   const record = output as Record<string, unknown>;
   const result: StoredOutput = {};
   if (typeof record.text === "string" && record.text) result.text = record.text;
-  const image = record.image;
-  if (image && typeof image === "object") {
-    const imageRecord = image as Record<string, unknown>;
-    if (typeof imageRecord.relativePath === "string" && imageRecord.relativePath) {
-      result.image = {
-        relativePath: imageRecord.relativePath,
-        mediaType: typeof imageRecord.mediaType === "string" ? imageRecord.mediaType : undefined,
-      };
-    }
-  }
-  if (!result.text && !result.image) return undefined;
+  const image = readMedia(record.image);
+  const video = readMedia(record.video);
+  const audio = readMedia(record.audio);
+  if (image) result.image = image;
+  if (video) result.video = video;
+  if (audio) result.audio = audio;
+  if (!result.text && !result.image && !result.video && !result.audio) return undefined;
   return result;
 }
 
@@ -75,10 +84,16 @@ export function graphToFlowNodes(
 
 export function graphToFlowEdges(graph: Graph, selectedEdgeIds: readonly string[]): Edge[] {
   const selected = new Set(selectedEdgeIds);
-  return graph.edges.map((edge) => graphEdgeToFlow(edge, selected.has(edge.id)));
+  return graph.edges.map((edge) => graphEdgeToFlow(graph, edge, selected.has(edge.id)));
 }
 
-function graphEdgeToFlow(edge: GraphEdge, selected: boolean): Edge {
+function sourcePortType(graph: Graph, edge: GraphEdge): PortDataType | undefined {
+  const node = graph.nodes.find((item) => item.id === edge.source);
+  return node?.ports.find((port) => port.id === edge.sourcePort)?.dataType;
+}
+
+function graphEdgeToFlow(graph: Graph, edge: GraphEdge, selected: boolean): Edge {
+  const typed = sourcePortType(graph, edge);
   return {
     id: edge.id,
     source: edge.source,
@@ -86,6 +101,10 @@ function graphEdgeToFlow(edge: GraphEdge, selected: boolean): Edge {
     sourceHandle: edge.sourcePort,
     targetHandle: edge.targetPort,
     selected,
-    style: { stroke: "oklch(0.82 0.11 200)", strokeWidth: 2 },
+    interactionWidth: 16,
+    style: {
+      stroke: selected ? "#F43F5E" : typed ? portColor[typed] : "rgba(244,244,245,0.45)",
+      strokeWidth: selected ? 1.75 : 1.5,
+    },
   };
 }

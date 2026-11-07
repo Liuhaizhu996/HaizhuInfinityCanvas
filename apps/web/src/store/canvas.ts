@@ -10,6 +10,7 @@ import {
   type ProjectDocument,
 } from "@haizhu/canvas-core";
 import type { NodeDefinition } from "@haizhu/node-sdk";
+import { chrome } from "@/lib/chrome";
 import type { RunSnapshot } from "@/lib/engine-client";
 import type { AgentFlowNode, MeasuredSize } from "@/lib/flow-graph";
 
@@ -51,7 +52,11 @@ function snapshot(project: ProjectDocument): ProjectDocument {
 function gridPosition(index: number): { x: number; y: number } {
   const column = index % 3;
   const row = Math.floor(index / 3);
-  return { x: 48 + column * 380, y: 64 + row * 220 };
+  // Land click-to-add inside the visible gap, clear of the overlay rails.
+  return {
+    x: chrome.library + 40 + column * 360,
+    y: chrome.top + 72 + row * 260,
+  };
 }
 
 function nodeFromDefinition(

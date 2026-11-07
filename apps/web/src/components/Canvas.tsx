@@ -1,5 +1,6 @@
-import { useMemo } from "react";
-import { Background, Controls, ReactFlow, ReactFlowProvider, useReactFlow } from "@xyflow/react";
+import { useMemo, type ReactNode } from "react";
+import { Background, BackgroundVariant, ReactFlow, ReactFlowProvider, useReactFlow } from "@xyflow/react";
+import { CornersOut, Minus, Plus } from "@phosphor-icons/react";
 import "@xyflow/react/dist/style.css";
 import { nodeCatalog } from "@haizhu/node-sdk";
 import { validateConnection } from "@haizhu/canvas-core";
@@ -10,6 +11,7 @@ import { useCanvasStore } from "@/store/canvas";
 import { useRunStore } from "@/store/run";
 
 const nodeTypes = { [AGENT_NODE_TYPE]: AgentNode };
+const edgeStroke = "rgba(244,244,245,0.55)";
 
 function CanvasSurface() {
   const project = useCanvasStore((state) => state.project);
@@ -34,7 +36,7 @@ function CanvasSurface() {
 
   return (
     <main
-      className="relative min-w-0 flex-1"
+      className="absolute inset-0 bg-background"
       aria-label="无限画布"
       onDragOverCapture={(event) => {
         if (!isNodeDrag(event.dataTransfer)) return;
@@ -50,7 +52,6 @@ function CanvasSurface() {
         if (!type) return;
         const definition = nodeCatalog.find((item) => item.type === type);
         if (!definition) return;
-        // Top-left of the new node, in flow space (pan and zoom included).
         const position = screenToFlowPosition({ x: event.clientX, y: event.clientY });
         addFromCatalog(definition, position);
       }}
@@ -75,31 +76,49 @@ function CanvasSurface() {
         }}
         colorMode="dark"
         connectionRadius={40}
-        defaultEdgeOptions={{ style: { stroke: "oklch(0.82 0.11 200)", strokeWidth: 2 } }}
-        connectionLineStyle={{ stroke: "oklch(0.82 0.11 200)", strokeWidth: 2 }}
+        defaultEdgeOptions={{
+          style: { stroke: edgeStroke, strokeWidth: 1.5 },
+          interactionWidth: 16,
+        }}
+        connectionLineStyle={{ stroke: edgeStroke, strokeWidth: 1.5 }}
         deleteKeyCode={["Backspace", "Delete"]}
         proOptions={{ hideAttribution: false }}
       >
-        <Background gap={20} size={1} />
-        <Controls />
+        <Background variant={BackgroundVariant.Dots} gap={28} size={1.15} color="rgba(255,255,255,0.045)" />
       </ReactFlow>
+      <CanvasControls />
       {banner && !(banner.tone === "empty" && nodes.length > 0) ? (
         <div
           id="canvas-banner"
           role="status"
-          className={`pointer-events-none absolute left-3 right-3 top-3 z-10 rounded-md border px-3 py-2 text-xs leading-relaxed ${bannerClass(banner.tone)}`}
+          className="pointer-events-none absolute z-10 flex justify-center px-4"
+          style={{
+            top: "calc(var(--hz-top) + 12px)",
+            left: "var(--hz-library)",
+            right: "var(--hz-inspector)",
+          }}
         >
-          {banner.text}
+          <p
+            className={`hz-glass max-w-md rounded-xl border border-border px-3.5 py-2.5 text-xs leading-relaxed text-foreground ${bannerEdge(banner.tone)}`}
+          >
+            {banner.text}
+          </p>
         </div>
       ) : null}
       {nodes.length === 0 ? (
-        <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-          <div className="max-w-sm rounded-xl border border-dashed border-border bg-background/70 px-6 py-5 text-center">
-            <p className="text-sm font-medium">画布是空的</p>
-            <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-              从左侧把「对话 LLM」拖到画布，再拖「图像」，把 text 连到 prompt。
-              <br />
-              右侧填提示词，「设置」里把密钥交给本地引擎，然后点「运行」。只跑一次。
+        <div
+          className="pointer-events-none absolute flex items-center justify-center"
+          style={{
+            top: "var(--hz-top)",
+            left: "var(--hz-library)",
+            right: "var(--hz-inspector)",
+            bottom: 0,
+          }}
+        >
+          <div className="max-w-[280px] text-center">
+            <p className="font-display text-[15px] font-medium text-foreground">拖一个节点到这里</p>
+            <p className="mt-2 text-[13px] leading-relaxed text-muted-foreground">
+              从左侧拖到画布上，或在节点库里点一下。
             </p>
           </div>
         </div>
@@ -108,13 +127,56 @@ function CanvasSurface() {
   );
 }
 
-function bannerClass(tone: "offline" | "error" | "empty" | "info" | "running"): string {
-  if (tone === "offline" || tone === "error") {
-    return "border-destructive/50 bg-background/90 text-destructive";
-  }
-  if (tone === "empty") return "border-dashed border-border bg-background/90 text-muted-foreground";
-  if (tone === "running") return "border-primary/40 bg-background/90 text-primary";
-  return "border-border bg-background/90 text-muted-foreground";
+function bannerEdge(tone: "offline" | "error" | "empty" | "info" | "running"): string {
+  if (tone === "offline") return "border-l-2 border-l-warning";
+  if (tone === "error") return "border-l-2 border-l-danger";
+  if (tone === "running") return "border-l-2 border-l-primary";
+  return "";
+}
+
+function CanvasControls() {
+  const { zoomIn, zoomOut, fitView } = useReactFlow();
+  const motion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const duration = motion ? 0 : 180;
+
+  return (
+    <div
+      className="hz-glass absolute z-10 flex flex-col overflow-hidden rounded-[10px] border border-border"
+      style={{ left: "calc(var(--hz-library) + 12px)", bottom: 12 }}
+    >
+      <ControlButton label="放大" onClick={() => zoomIn({ duration })}>
+        <Plus size={15} aria-hidden />
+      </ControlButton>
+      <ControlButton label="缩小" onClick={() => zoomOut({ duration })}>
+        <Minus size={15} aria-hidden />
+      </ControlButton>
+      <ControlButton label="适配画面" onClick={() => fitView({ padding: 0.28, duration: motion ? 0 : 200 })}>
+        <CornersOut size={15} aria-hidden />
+      </ControlButton>
+    </div>
+  );
+}
+
+function ControlButton({
+  label,
+  onClick,
+  children,
+}: {
+  label: string;
+  onClick: () => void;
+  children: ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      title={label}
+      onClick={onClick}
+      className="grid size-8 place-items-center border-b border-border text-foreground last:border-b-0 hover:bg-white/[0.06] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+    >
+      {children}
+    </button>
+  );
 }
 
 export function Canvas() {

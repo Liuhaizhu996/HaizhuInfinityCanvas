@@ -1,6 +1,6 @@
 {
   "name": "haizhu-infinity-canvas",
-  "version": "1.0.0-beta.1",
+  "version": "1.0.0-beta.2",
   "private": true,
   "license": "UNLICENSED",
   "description": "Haizhu Infinity Canvas — private node-graph workspace for multi-model agents.",

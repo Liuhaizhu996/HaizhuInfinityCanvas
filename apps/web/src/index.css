@@ -1,9 +1,27 @@
+@import "@fontsource/outfit/400.css";
+@import "@fontsource/outfit/500.css";
+@import "@fontsource/outfit/600.css";
+@import "@fontsource/outfit/700.css";
+@import "@fontsource/work-sans/400.css";
+@import "@fontsource/work-sans/500.css";
+@import "@fontsource/work-sans/600.css";
+@import "@fontsource/jetbrains-mono/400.css";
+@import "@fontsource/jetbrains-mono/500.css";
 @import "tailwindcss";
 @source "../../../packages/ui/src";
 
 @custom-variant dark (&:is(.dark *));
 
+/*
+  Tokens from docs/design/MASTER.md.
+  --hz-accent is the rose action color. shadcn's --accent stays a quiet hover surface
+  so ghost buttons do not fill with the brand color.
+  Primary button text is near-black: white on #F43F5E is below 4.5:1.
+*/
 @theme inline {
+  --font-sans: var(--font-body);
+  --font-display: var(--font-ui);
+  --font-mono: var(--font-code);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -16,37 +34,57 @@
   --color-muted-foreground: var(--muted-foreground);
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
+  --color-accent-soft: var(--hz-accent-soft);
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
+  --color-success: var(--hz-success);
+  --color-warning: var(--hz-warning);
+  --color-danger: var(--hz-danger);
+  --color-surface: var(--surface);
+  --radius-sm: 8px;
+  --radius-md: 10px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
 }
 
 :root {
-  --radius: 0.625rem;
   color-scheme: dark;
-  --background: oklch(0.145 0.02 230);
-  --foreground: oklch(0.96 0.01 220);
-  --card: oklch(0.205 0.022 230);
-  --card-foreground: oklch(0.96 0.01 220);
-  --primary: oklch(0.82 0.11 200);
-  --primary-foreground: oklch(0.18 0.03 230);
-  --secondary: oklch(0.26 0.02 230);
-  --secondary-foreground: oklch(0.96 0.01 220);
-  --muted: oklch(0.26 0.02 230);
-  --muted-foreground: oklch(0.74 0.03 220);
-  --accent: oklch(0.32 0.03 210);
-  --accent-foreground: oklch(0.97 0.01 220);
-  --destructive: oklch(0.65 0.2 25);
-  --destructive-foreground: oklch(0.98 0.01 220);
-  --border: oklch(0.8 0.04 210 / 18%);
-  --input: oklch(0.8 0.04 210 / 24%);
-  --ring: oklch(0.82 0.11 200);
+  --font-ui: "Outfit", "PingFang SC", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+  --font-body: "Work Sans", "PingFang SC", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+  --font-code: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --background: #0a0a0b;
+  --foreground: #f4f4f5;
+  --surface: #141416;
+  --surface-glass: rgba(20, 20, 22, 0.72);
+  --border: rgba(255, 255, 255, 0.08);
+  --hz-accent: #f43f5e;
+  --hz-accent-soft: #fb7185;
+  --hz-success: #34d399;
+  --hz-warning: #fbbf24;
+  --hz-danger: #ef4444;
+  --hz-port-text: #38bdf8;
+  --hz-port-image: #a78bfa;
+  --hz-port-video: #f472b6;
+  --hz-port-audio: #34d399;
+  --hz-port-storyboard: #fbbf24;
+  --card: var(--surface);
+  --card-foreground: var(--foreground);
+  --primary: var(--hz-accent);
+  --primary-foreground: #0a0a0b;
+  --secondary: #1c1c1f;
+  --secondary-foreground: var(--foreground);
+  --muted: #1c1c1f;
+  --muted-foreground: #a1a1aa;
+  --accent: rgba(255, 255, 255, 0.06);
+  --accent-foreground: var(--foreground);
+  --destructive: var(--hz-danger);
+  --destructive-foreground: #0a0a0b;
+  --input: rgba(255, 255, 255, 0.08);
+  --ring: var(--hz-accent);
+  --radius: 12px;
 }
 
 html,
@@ -57,14 +95,117 @@ body,
 
 body {
   margin: 0;
-  font-family: "Segoe UI", "PingFang SC", "Noto Sans SC", "Microsoft YaHei", sans-serif;
   background: var(--background);
   color: var(--foreground);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
-.react-flow__handle {
-  width: 10px;
-  height: 10px;
+::selection {
+  background: rgba(244, 63, 94, 0.35);
+  color: #f4f4f5;
+}
+
+:focus-visible {
+  outline: 2px solid var(--hz-accent);
+  outline-offset: 2px;
+}
+
+button,
+input,
+textarea {
+  font: inherit;
+}
+
+h1,
+h2,
+h3,
+button {
+  font-family: var(--font-ui);
+}
+
+.hz-glass {
+  background: var(--surface-glass);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.hz-rail {
+  animation: hz-rail-in 200ms ease-out;
+}
+
+.hz-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.18) transparent;
+}
+
+.hz-field {
+  width: 100%;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: #0a0a0b;
+  color: var(--foreground);
+  font-family: var(--font-body);
+  font-size: 12px;
+  line-height: 1.45;
+  padding: 7px 10px;
+}
+
+.hz-field::placeholder {
+  color: #a1a1aa;
+}
+
+.hz-field:focus-visible {
+  outline: 2px solid var(--hz-accent);
+  outline-offset: 1px;
+  border-color: transparent;
+}
+
+.hz-field:disabled {
+  opacity: 0.55;
+}
+
+.hz-field-mono {
+  font-family: var(--font-code);
+  font-size: 12px;
+}
+
+.hz-well {
+  overflow: hidden;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: #0a0a0b;
+}
+
+.hz-node {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  box-shadow: none;
+  transition:
+    border-color 180ms ease-out,
+    opacity 180ms ease-out;
+}
+
+.react-flow__node-agent:hover .hz-node {
+  border-color: rgba(255, 255, 255, 0.16);
+}
+
+.hz-node-running {
+  border-color: color-mix(in srgb, var(--hz-accent) 55%, transparent);
+}
+
+.hz-node-failed {
+  border-color: color-mix(in srgb, var(--hz-danger) 75%, transparent);
+}
+
+.react-flow__node-agent.selected .hz-node,
+.react-flow__node-agent:focus-visible .hz-node,
+.react-flow__node-agent.selected:hover .hz-node,
+.react-flow__node-agent:focus-visible:hover .hz-node {
+  border-color: var(--hz-accent);
+  box-shadow: none;
 }
 
 .react-flow__node-agent {
@@ -72,56 +213,154 @@ body {
   border: none;
   background: transparent;
   box-shadow: none;
+  font-family: var(--font-body);
 }
 
-.react-flow__node-agent.selected .hz-node {
-  box-shadow: 0 0 0 1px var(--primary);
+.react-flow__node-agent:focus {
+  outline: none;
 }
 
-.hz-port {
-  width: 14px;
-  height: 14px;
-  border: 2px solid var(--background);
+.react-flow__handle.hz-port {
+  z-index: 5;
+  width: 9px;
+  height: 9px;
+  min-width: 9px;
+  min-height: 9px;
+  border: 1.5px solid #141416;
+  border-radius: 999px;
+  background: var(--hz-port-text);
 }
 
-.hz-port-text {
-  background: oklch(0.78 0.06 230);
+.react-flow__handle.hz-port:hover {
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.08);
 }
 
-.hz-port-image {
-  background: oklch(0.78 0.12 150);
+.react-flow__handle.hz-port-text {
+  background: var(--hz-port-text);
 }
 
-.hz-port-video {
-  background: oklch(0.75 0.14 45);
+.react-flow__handle.hz-port-image {
+  background: var(--hz-port-image);
 }
 
-.hz-port-audio {
-  background: oklch(0.75 0.12 320);
+.react-flow__handle.hz-port-video {
+  background: var(--hz-port-video);
 }
 
-.hz-port-storyboard {
-  background: oklch(0.82 0.12 95);
+.react-flow__handle.hz-port-audio {
+  background: var(--hz-port-audio);
 }
 
-.hz-preview {
-  width: 100%;
-  max-height: 180px;
-  object-fit: contain;
-  border-radius: 6px;
-  background: oklch(0.16 0.02 230);
+.react-flow__handle.hz-port-storyboard {
+  background: var(--hz-port-storyboard);
 }
 
 .react-flow {
-  --xy-background-color: transparent;
-  --xy-node-background-color: var(--card);
+  --xy-background-color: #0a0a0b;
+  --xy-background-pattern-color: rgba(255, 255, 255, 0.045);
+  --xy-node-background-color: transparent;
   --xy-node-color: var(--foreground);
-  --xy-node-border: 1px solid var(--border);
-  --xy-node-border-radius: 10px;
-  --xy-node-boxshadow-hover: 0 0 0 1px var(--primary);
-  --xy-node-boxshadow-selected: 0 0 0 1px var(--primary);
-  --xy-controls-button-background-color: var(--card);
-  --xy-controls-button-color: var(--foreground);
-  --xy-controls-button-background-color-hover: var(--accent);
-  --xy-controls-border-color: var(--border);
+  --xy-node-border: none;
+  --xy-node-border-radius: 12px;
+  --xy-node-boxshadow-hover: none;
+  --xy-node-boxshadow-selected: none;
+  --xy-node-boxshadow-selected-default: none;
+  --xy-edge-stroke: rgba(244, 244, 245, 0.45);
+  --xy-edge-stroke-selected: #f43f5e;
+  --xy-connectionline-stroke: rgba(244, 244, 245, 0.8);
+  --xy-selection-background-color: rgba(244, 63, 94, 0.08);
+  --xy-selection-border-color: rgba(244, 63, 94, 0.7);
+  --xy-attribution-background-color: transparent;
+}
+
+.react-flow__selection,
+.react-flow__nodesselection-rect {
+  background: rgba(244, 63, 94, 0.08);
+  border: 1px solid rgba(244, 63, 94, 0.7);
+}
+
+.react-flow__attribution {
+  margin: 0 0 8px !important;
+  right: calc(var(--hz-inspector) + 10px) !important;
+  background: transparent !important;
+  color: rgba(161, 161, 170, 0.85) !important;
+  font-family: var(--font-code);
+  font-size: 10px;
+}
+
+.react-flow__attribution a {
+  color: inherit !important;
+}
+
+.hz-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: rgba(0, 0, 0, 0.72);
+}
+
+.hz-dialog {
+  position: fixed;
+  z-index: 61;
+  left: 50%;
+  top: 50%;
+  width: min(520px, calc(100vw - 32px));
+  max-height: min(680px, calc(100vh - 48px));
+  overflow: auto;
+  transform: translate(-50%, -50%);
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: #141416;
+  color: var(--foreground);
+  padding: 18px 18px 14px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.4);
+  animation: hz-pop 200ms ease-out;
+}
+
+.hz-dialog:focus {
+  outline: none;
+}
+
+@keyframes hz-rail-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes hz-pop {
+  from {
+    opacity: 0;
+    transform: translate(-50%, calc(-50% + 8px));
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%);
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .hz-glass,
+  .hz-dialog {
+    background: #141416;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+  .hz-overlay {
+    background: rgba(0, 0, 0, 0.88);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

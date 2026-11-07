@@ -77,6 +77,20 @@ export function assetUrl(relativePath: string): string {
   return `${engineOrigin()}/assets/${safe}`;
 }
 
+export async function getCredentialState(): Promise<"ready" | "needs_key"> {
+  const response = await request("/adapters");
+  const body = (await response.json()) as unknown;
+  if (!body || typeof body !== "object") return "ready";
+  const adapters = (body as { adapters?: unknown }).adapters;
+  if (!Array.isArray(adapters)) return "ready";
+  const needsKey = adapters.some((item) => {
+    if (!item || typeof item !== "object") return false;
+    const row = item as { implemented?: unknown; status?: unknown };
+    return row.implemented === true && row.status === "needs_key";
+  });
+  return needsKey ? "needs_key" : "ready";
+}
+
 export async function getHealth(): Promise<void> {
   const response = await request("/health");
   const body = (await response.json()) as unknown;

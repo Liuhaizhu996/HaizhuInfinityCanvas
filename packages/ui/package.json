@@ -1,6 +1,6 @@
 {
   "name": "@haizhu/ui",
-  "version": "1.0.0-beta.1",
+  "version": "1.0.0-beta.2",
   "private": true,
   "license": "UNLICENSED",
   "type": "module",
@@ -19,6 +19,11 @@
       "types": "./src/components/button.tsx",
       "import": "./src/components/button.tsx",
       "default": "./src/components/button.tsx"
+    },
+    "./components/dialog": {
+      "types": "./src/components/dialog.tsx",
+      "import": "./src/components/dialog.tsx",
+      "default": "./src/components/dialog.tsx"
     }
   },
   "types": "./src/index.ts",
@@ -30,6 +35,7 @@
     "react-dom": "^19.0.0"
   },
   "dependencies": {
+    "@radix-ui/react-dialog": "^1.3.1",
     "@radix-ui/react-slot": "^1.5.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",

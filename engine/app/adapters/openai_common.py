@@ -13,7 +13,7 @@ from app.errors import sanitize
 CHAT_MODEL = "gpt-4o-mini"
 IMAGE_MODEL = "dall-e-3"
 IMAGE_SIZE = "1024x1024"
-USER_AGENT = "HaizhuInfinityCanvas/1.0.0-beta.1"
+USER_AGENT = "HaizhuInfinityCanvas/1.0.0-beta.2"
 
 
 class AdapterError(Exception):

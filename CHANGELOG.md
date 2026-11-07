@@ -1,8 +1,15 @@
 # Changelog
 
-## [Unreleased]
+## 1.0.0-beta.2 — 2026-11-05
 
-Still `1.0.0-beta.1`. No version bump. `GRAPH_DOCUMENT_VERSION` stays `1.0.0-beta.1`: runner fields and outputs live in the existing `node.data` object, and image bytes stay out of the JSON.
+Creator studio chrome. Locked tokens live in `docs/design/MASTER.md`.
+
+- Dark cinematic UI: canvas void `#0A0A0B`, rose accent, glass rails, Outfit / Work Sans / JetBrains Mono, Phosphor icons. Image, video, and audio nodes (including the TTS stubs) lead with a media well. Empty, error, and engine-offline states sit on the same canvas.
+- Product version is `1.0.0-beta.2`. `GRAPH_DOCUMENT_VERSION` stays `1.0.0-beta.1`, so existing `.hzcanvas` files still open and run. `/health` reports the product version. The runner checks the graph literal, not the product string.
+
+## 1.0.0-beta.1 — 2026-11-05
+
+Scaffold, then the first runnable graph. The document format did not change: runner fields and outputs live in `node.data`, and image bytes stay out of the JSON.
 
 - FastAPI sidecar runs one user-triggered graph (or a selected subgraph plus its ancestors). `POST /runs`, `GET /runs/{id}`, `POST /runs/{id}/cancel`. Cycles are rejected even though the file may store them. A second run returns 409 while one is in progress.
 - Real clients for `openai.chat` (Chat Completions, blocking) and `openai.image` (Images API). Keys and base URL come from the process environment or `engine/.env`. `GET/PUT /settings` never echoes the key.
@@ -13,13 +20,7 @@ Still `1.0.0-beta.1`. No version bump. `GRAPH_DOCUMENT_VERSION` stays `1.0.0-bet
 - Web canvas state is a `ProjectDocument`. Drag an agent from the library onto the canvas (click-to-add remains). Download and open a `.hzcanvas` JSON file. Undo and redo (session history, not stored in the file).
 - The sibling `*.hzcanvas.assets` directory is part of the format. The browser keeps `assets.entries` and does not read or write those files.
 - Storyboard stub `storyboard.board` in the agent catalog. ComfyUI, Wan/Kling, Edge-TTS, and CosyVoice stay stubs. No batch runner, streaming, FFmpeg, or Tauri packaging.
-
-## 1.0.0-beta.1 — 2026-11-05
-
-Scaffold for the private monorepo.
-
-- Vite + React 19 web app with an empty React Flow canvas and a stub Agent library
-- Workspace packages for graph types, node definitions, and shadcn-based UI
-- FastAPI sidecar with `GET /health`
-- Product docs: feasibility, stack ADR, roadmap
-- No model calls, media export, or Tauri packaging
+- Vite + React 19 web app with an empty React Flow canvas and a stub Agent library.
+- Workspace packages for graph types, node definitions, and shadcn-based UI.
+- FastAPI sidecar with `GET /health`.
+- Product docs: feasibility, stack ADR, roadmap.

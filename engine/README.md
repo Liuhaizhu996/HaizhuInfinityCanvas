@@ -9,7 +9,7 @@ python3 -m venv .venv
 .venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8787
 ```
 
-`GET /health` returns `{"ok":true,"version":"1.0.0-beta.1"}`. The version string is read from the repository `VERSION` file.
+`GET /health` returns `{"ok":true,"version":"1.0.0-beta.2"}`. The version string is read from the repository `VERSION` file. Graph documents stay on `1.0.0-beta.1` until their shape changes.
 
 ```bash
 .venv/bin/pytest
@@ -37,7 +37,7 @@ CORS allows `http://127.0.0.1:<port>` and `http://localhost:<port>` so the Vite 
 
 | Method | Path | What it does |
 | --- | --- | --- |
-| `GET` | `/health` | `{"ok":true,"version":"1.0.0-beta.1"}` |
+| `GET` | `/health` | `{"ok":true,"version":"1.0.0-beta.2"}` |
 | `GET` | `/adapters` | Each known node: `implemented` and `status` (`ready`, `needs_key`, or `stub`) |
 | `GET` | `/settings` | Base URL, whether a key is set, logical file name `engine/.env` |
 | `PUT` | `/settings` | `{ "openaiBaseUrl", "openaiApiKey" }`. An empty key keeps the saved one |
@@ -46,7 +46,7 @@ CORS allows `http://127.0.0.1:<port>` and `http://localhost:<port>` so the Vite 
 | `POST` | `/runs/{run_id}/cancel` | Sets cancel and closes the in-flight socket |
 | `GET` | `/assets/{relativePath}` | Image bytes from `engine/var/assets`. Rejects `..` and non-image suffixes |
 
-`graph` is the canvas-core graph object (`version` must be `1.0.0-beta.1`). `nodeIds` limits the run to those nodes plus ancestors. Omit it to run the whole graph.
+`graph` is the canvas-core graph object (`version` must be the document literal `1.0.0-beta.1`, not the product version). `nodeIds` limits the run to those nodes plus ancestors. Omit it to run the whole graph.
 
 Run `status`: `running`, `succeeded`, `failed`, `cancelled`.
 
