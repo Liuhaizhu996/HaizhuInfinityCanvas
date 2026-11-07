@@ -2,7 +2,7 @@
 
 Haizhu Infinity Canvas is a private node canvas for multi-model agents. Sequence is fixed: **WebUI → Windows desktop → Linux desktop**.
 
-Version `1.0.0-beta.1` is the scaffold in this repository. It is not the MVP.
+Version `1.0.0-beta.1` is the scaffold and the first runnable graph. `1.0.0-beta.2` is the creator UI on the same `.hzcanvas` format. See `docs/design/MASTER.md`. It is not the MVP.
 
 ## Now — v1.0.0-beta.1
 

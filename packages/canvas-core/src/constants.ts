@@ -1,4 +1,7 @@
-/** Keep this aligned with the repository VERSION file. */
+/**
+ * `.hzcanvas` formatVersion. Stays on 1.0.0-beta.1 so existing documents
+ * still open. The product version lives in the repository VERSION file.
+ */
 export const GRAPH_DOCUMENT_VERSION = "1.0.0-beta.1";
 
 export const HZCANVAS_FORMAT = "hzcanvas" as const;

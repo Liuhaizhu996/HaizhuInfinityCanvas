@@ -4,6 +4,7 @@ import {
   EngineRequestError,
   cancelRun,
   createRun,
+  getCredentialState,
   getHealth,
   getRun,
   type RunSnapshot,
@@ -15,8 +16,11 @@ export type CanvasBanner = {
   text: string;
 };
 
+export type CredentialState = "unknown" | "ready" | "needs_key";
+
 type RunState = {
   phase: "checking" | "online" | "offline";
+  credentials: CredentialState;
   run: RunSnapshot | null;
   banner: CanvasBanner | null;
   settingsOpen: boolean;
@@ -112,6 +116,7 @@ function watch(runId: string) {
 
 export const useRunStore = create<RunState>((set, get) => ({
   phase: "checking",
+  credentials: "unknown",
   run: null,
   banner: null,
   settingsOpen: false,
@@ -126,12 +131,23 @@ export const useRunStore = create<RunState>((set, get) => ({
   refreshHealth: async () => {
     try {
       await getHealth();
+      let credentials: CredentialState = "unknown";
+      try {
+        credentials = await getCredentialState();
+      } catch {
+        credentials = "unknown";
+      }
       set((state) => ({
         phase: "online",
+        credentials,
         banner: state.banner?.tone === "offline" ? null : state.banner,
       }));
     } catch {
-      set({ phase: "offline", banner: { tone: "offline", text: OFFLINE_TEXT } });
+      set({
+        phase: "offline",
+        credentials: "unknown",
+        banner: { tone: "offline", text: OFFLINE_TEXT },
+      });
     }
   },
 

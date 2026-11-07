@@ -1,6 +1,6 @@
 # `.hzcanvas` project file
 
-Version `1.0.0-beta.1`. The web app downloads and opens this file. It does not read or write the assets directory. Model calls go to the local sidecar and are not part of this file.
+Format version `1.0.0-beta.1`. The product version can be newer (`VERSION`, `/health`). The web app downloads and opens this file. It does not read or write the assets directory. Model calls go to the local sidecar and are not part of this file.
 
 ## Files on disk
 
@@ -25,7 +25,7 @@ The browser build only transfers the JSON file. `assets.entries` is kept so a la
 | `assets.directory` | One path segment, ending in `.hzcanvas.assets`. |
 | `assets.entries` | Manifest only. File bytes are not embedded. |
 
-`graph.version` is the same literal as `formatVersion`. Bump `GRAPH_DOCUMENT_VERSION` in `@haizhu/canvas-core` when either shape breaks.
+`graph.version` is the same literal as `formatVersion`. Bump `GRAPH_DOCUMENT_VERSION` in `@haizhu/canvas-core` when either shape breaks. Do not bump it just because the product version changed.
 
 ### Graph
 

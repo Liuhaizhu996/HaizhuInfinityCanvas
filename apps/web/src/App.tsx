@@ -1,11 +1,18 @@
-import { useEffect } from "react";
+import { useEffect, type CSSProperties } from "react";
 import { AgentLibrary } from "@/components/AgentLibrary";
 import { Canvas } from "@/components/Canvas";
 import { Inspector } from "@/components/Inspector";
 import { SettingsDialog } from "@/components/SettingsDialog";
 import { TopBar } from "@/components/TopBar";
+import { chrome } from "@/lib/chrome";
 import { useCanvasStore } from "@/store/canvas";
 import { useRunStore } from "@/store/run";
+
+const frame = {
+  "--hz-top": `${chrome.top}px`,
+  "--hz-library": `${chrome.library}px`,
+  "--hz-inspector": `${chrome.inspector}px`,
+} as CSSProperties;
 
 export function App() {
   const undo = useCanvasStore((state) => state.undo);
@@ -44,13 +51,11 @@ export function App() {
   }, [redo, undo]);
 
   return (
-    <div className="flex h-full flex-col bg-background text-foreground">
+    <div className="relative h-full overflow-hidden bg-background text-foreground" style={frame}>
+      <Canvas />
       <TopBar />
-      <div className="flex min-h-0 flex-1">
-        <AgentLibrary />
-        <Canvas />
-        <Inspector />
-      </div>
+      <AgentLibrary />
+      <Inspector />
       <SettingsDialog />
     </div>
   );

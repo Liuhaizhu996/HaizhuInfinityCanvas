@@ -12,4 +12,4 @@ Windows 桌面端排在 WebUI 之后，Linux 再往后。本目录还不是 Taur
 
 ## English
 
-Tauri 2 stub only. No Rust crate and no installer. The later Windows shell will host the web build and spawn the FastAPI sidecar. Linux comes after Windows. Packaging is out of scope for v1.0.0-beta.1.
+Tauri 2 stub only. No Rust crate and no installer. The later Windows shell will host the web build and spawn the FastAPI sidecar. Linux comes after Windows. Packaging is out of scope for the current beta.

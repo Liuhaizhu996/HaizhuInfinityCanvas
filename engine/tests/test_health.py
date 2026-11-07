@@ -11,4 +11,4 @@ def test_health_matches_version_file() -> None:
     response = TestClient(app).get("/health")
     assert response.status_code == 200
     assert response.json() == {"ok": True, "version": ROOT_VERSION}
-    assert ROOT_VERSION == "1.0.0-beta.1"
+    assert ROOT_VERSION == "1.0.0-beta.2"

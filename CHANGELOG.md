@@ -1,8 +1,16 @@
 # Changelog
 
-## [Unreleased]
+## 1.0.0-beta.2 — 2026-11-05
 
-Still `1.0.0-beta.1`. No version bump. `GRAPH_DOCUMENT_VERSION` stays `1.0.0-beta.1`: ComfyUI and video fields live in the existing `node.data` object. Image and video bytes stay out of the JSON.
+Creator studio chrome. Locked tokens live in `docs/design/MASTER.md`.
+
+- Dark cinematic UI: canvas void `#0A0A0B`, rose accent, glass rails, Outfit / Work Sans / JetBrains Mono, Phosphor icons. Image, video, and audio nodes lead with a media well.
+- Canvas interactions: drag a local image in for a session preview, double-click the empty pane to pick a node, bottom dock runs once, and 整理 reflows positions without touching edges. No credit badge and no silent retry.
+- Product version is `1.0.0-beta.2`. `GRAPH_DOCUMENT_VERSION` stays `1.0.0-beta.1`, so existing `.hzcanvas` files still open and run. `/health` reports the product version. The runner checks the graph literal, not the product string.
+
+## 1.0.0-beta.1 — 2026-11-05
+
+Scaffold, then the first runnable graph. The document format did not change: ComfyUI and video fields live in `node.data`. Image and video bytes stay out of the JSON.
 
 - `comfyui.image` calls a user-run ComfyUI over HTTP only (queue, poll `/history`, download `/view`). The user supplies an API-format workflow. Optional reference image upload. Timeout and cancel interrupt that server and do not start another attempt. No ComfyUI source and no GPL dependency.
 - `video.wan-kling` is one node. The inspector picks Wan or Kling. The sidecar submits one async job, polls, downloads the file, and stops on timeout. Cancel stops polling and does not start downstream. There is no automatic retry.
@@ -17,13 +25,4 @@ Still `1.0.0-beta.1`. No version bump. `GRAPH_DOCUMENT_VERSION` stays `1.0.0-bet
 - Web canvas state is a `ProjectDocument`. Drag an agent from the library onto the canvas (click-to-add remains). Download and open a `.hzcanvas` JSON file. Undo and redo (session history, not stored in the file).
 - The sibling `*.hzcanvas.assets` directory is part of the format. The browser keeps `assets.entries` and does not read or write those files.
 - Storyboard stub `storyboard.board` in the agent catalog. Edge-TTS and CosyVoice stay stubs. No batch runner, streaming, FFmpeg, or Tauri packaging.
-
-## 1.0.0-beta.1 — 2026-11-05
-
-Scaffold for the private monorepo.
-
-- Vite + React 19 web app with an empty React Flow canvas and a stub Agent library
-- Workspace packages for graph types, node definitions, and shadcn-based UI
-- FastAPI sidecar with `GET /health`
-- Product docs: feasibility, stack ADR, roadmap
-- No model calls, media export, or Tauri packaging
+- Vite + React 19 web app, workspace packages, FastAPI `GET /health`, and product docs.

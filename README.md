@@ -1,8 +1,10 @@
 # 海珠无限画布 Haizhu Infinity Canvas
 
-`1.0.0-beta.1` · 私有 / All rights reserved
+`1.0.0-beta.2` · 私有 / All rights reserved
 
-无限画布上的多模型 Agent 工作流。当前版本 `1.0.0-beta.1`：可拖放的 Agent 库、`.hzcanvas` 保存、本地 FastAPI 跑一次对话、OpenAI 图像、本机 ComfyUI 或 Wan/Kling 视频。没有桌面安装包。语音仍是占位。
+无限画布上的多模型 Agent 工作流，暗色工作室界面。可拖放节点、保存 `.hzcanvas`、本地 FastAPI 跑一次对话、OpenAI 图像、本机 ComfyUI 或 Wan/Kling 视频。图文件格式仍是 `1.0.0-beta.1`。没有桌面安装包。语音仍是占位。
+
+界面令牌见 [docs/design/MASTER.md](docs/design/MASTER.md)。
 
 ## 运行 Web
 
@@ -30,7 +32,7 @@ python3 -m venv .venv
 .venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8787
 ```
 
-`GET http://127.0.0.1:8787/health` → `{"ok":true,"version":"1.0.0-beta.1"}`
+`GET http://127.0.0.1:8787/health` → `{"ok":true,"version":"1.0.0-beta.2"}`
 
 密钥不要写进仓库。在网页「设置」里保存，或复制 `engine/.env.example` 为 `engine/.env` 后填写（该文件已被 git 忽略）：
 
@@ -81,11 +83,11 @@ KLING_SECRET_KEY=
 
 ## English
 
-Private monorepo for a node-graph agent canvas. `1.0.0-beta.1` can drag agents, save `.hzcanvas`, and run one explicit pass for OpenAI chat, OpenAI image, a user-run ComfyUI, or Wan/Kling video. It does not build a desktop installer.
+Private monorepo for a node-graph agent canvas. `1.0.0-beta.2` is the creator UI. It can drag agents, save `.hzcanvas` (format `1.0.0-beta.1`), and run one explicit pass for OpenAI chat, OpenAI image, a user-run ComfyUI, or Wan/Kling video. Tokens: [docs/design/MASTER.md](docs/design/MASTER.md).
 
 - Web: `pnpm install`, then `pnpm --filter web dev` → http://127.0.0.1:5173 . Drag agents, connect `text` → `prompt`, set the key in Settings, then Run once. See [docs/hzcanvas.md](docs/hzcanvas.md).
 - Schema tests: `pnpm --filter @haizhu/canvas-core test`
-- Engine: commands above. Health returns `{"ok":true,"version":"1.0.0-beta.1"}`. Endpoints and adapter status: [engine/README.md](engine/README.md).
+- Engine: commands above. Health returns `{"ok":true,"version":"1.0.0-beta.2"}`. Endpoints and adapter status: [engine/README.md](engine/README.md).
 - Provider URLs and keys live in the environment or `engine/.env` (`OPENAI_*`, `COMFYUI_*`, `WAN_*`, `KLING_*`). The example file stays blank. The graph file never stores a key.
 - Still stubbed: Edge-TTS, CosyVoice, storyboard execution, batch runs, streaming, FFmpeg, Tauri. See `apps/desktop` and `plugins`.
 - Docs: feasibility, stack ADR, roadmap.
@@ -95,7 +97,8 @@ apps/web/              Vite + React 19 canvas
 apps/desktop/          Tauri 2 stub
 packages/canvas-core/  graph, node, and port types
 packages/node-sdk/     node manifests
-packages/ui/           shadcn button and cn()
+packages/ui/           studio button, dialog, and cn()
+docs/design/           locked beta.2 tokens
 engine/                FastAPI sidecar
 plugins/               adapter boundaries
 docs/                  research, ADR-001, roadmap

@@ -10,10 +10,10 @@ from fastapi.testclient import TestClient
 
 from app.adapters.transport import HttpResult, RunCancelled
 from app.main import create_app
-from app.version import read_version
+from app.version import GRAPH_DOCUMENT_VERSION
 from tests.support import PNG_BYTES, FakeTransport, comfy_node, edge, graph, json_result, video_node, wait_run
 
-VERSION = read_version()
+VERSION = GRAPH_DOCUMENT_VERSION
 COMFY = "http://comfy.example.test:8188"
 
 

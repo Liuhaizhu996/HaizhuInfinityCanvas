@@ -61,4 +61,4 @@ Calling a GPL program over HTTP, the way a browser calls a server, does not copy
 - Execution, secrets, and media bytes belong to the sidecar later, not to the Vite bundle.
 - Node authors describe ports in `@haizhu/node-sdk`. They do not get an `execute()` implementation in this beta.
 - shadcn components live in `packages/ui` and are scanned by the web Tailwind build. New components should be added there, not pasted into `apps/web`, so the desktop shell can reuse them.
-- Two version strings must stay in lockstep: the root `VERSION` file (read by FastAPI) and `GRAPH_DOCUMENT_VERSION` in `@haizhu/canvas-core`.
+- Through beta.1 the root `VERSION` file and `GRAPH_DOCUMENT_VERSION` stayed in lockstep. From beta.2 the product version (`/health`) can move while graph documents stay on `1.0.0-beta.1`. The runner checks the graph literal, not the product string.

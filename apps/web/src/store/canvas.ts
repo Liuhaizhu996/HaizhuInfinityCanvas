@@ -10,7 +10,9 @@ import {
   type ProjectDocument,
 } from "@haizhu/canvas-core";
 import type { NodeDefinition } from "@haizhu/node-sdk";
+import { chrome } from "@/lib/chrome";
 import type { RunSnapshot } from "@/lib/engine-client";
+import { arrangePositions } from "@/lib/arrange";
 import type { AgentFlowNode, MeasuredSize } from "@/lib/flow-graph";
 
 const HISTORY_LIMIT = 50;
@@ -30,10 +32,14 @@ type CanvasState = {
   future: ProjectDocument[];
   dragSnapshotTaken: boolean;
   notice: CanvasNotice | null;
+  /** Session-only object URLs. Never written into the project file. */
+  localPreviews: Record<string, string>;
   onNodesChange: (changes: NodeChange<AgentFlowNode>[]) => void;
   onEdgesChange: (changes: EdgeChange[]) => void;
   onConnect: (connection: Connection) => void;
-  addFromCatalog: (definition: NodeDefinition, position?: { x: number; y: number }) => void;
+  addFromCatalog: (definition: NodeDefinition, position?: { x: number; y: number }) => string | undefined;
+  setLocalPreview: (nodeId: string, url: string) => void;
+  arrange: (onlyIds?: readonly string[]) => void;
   clear: () => void;
   undo: () => void;
   redo: () => void;
@@ -51,7 +57,11 @@ function snapshot(project: ProjectDocument): ProjectDocument {
 function gridPosition(index: number): { x: number; y: number } {
   const column = index % 3;
   const row = Math.floor(index / 3);
-  return { x: 48 + column * 380, y: 64 + row * 220 };
+  // Land click-to-add inside the visible gap, clear of the overlay rails.
+  return {
+    x: chrome.library + 40 + column * 360,
+    y: chrome.top + 72 + row * 260,
+  };
 }
 
 function nodeFromDefinition(
@@ -108,6 +118,7 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
   future: [],
   dragSnapshotTaken: false,
   notice: null,
+  localPreviews: {},
 
   setNotice: (notice) => set({ notice }),
 
@@ -144,6 +155,7 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
       let dragSnapshotTaken = state.dragSnapshotTaken;
       let selectedNodeIds = state.selectedNodeIds;
       let measured = state.measured;
+      let localPreviews = state.localPreviews;
 
       const removedNodes = project.graph.nodes.some((node) => removeIds.has(node.id));
       if (removedNodes) {
@@ -164,6 +176,13 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
         measured = Object.fromEntries(
           Object.entries(measured).filter(([id]) => !removeIds.has(id)),
         );
+        const nextPreviews = { ...localPreviews };
+        for (const id of removeIds) {
+          const url = nextPreviews[id];
+          if (url) URL.revokeObjectURL(url);
+          delete nextPreviews[id];
+        }
+        localPreviews = nextPreviews;
         dragSnapshotTaken = false;
       }
 
@@ -215,6 +234,7 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
         dragSnapshotTaken,
         selectedNodeIds,
         measured,
+        localPreviews,
       };
     });
   },
@@ -308,7 +328,7 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
     const parsed = validateProjectDocument(next);
     if (!parsed.success) {
       set({ notice: { tone: "error", text: formatIssues(parsed.issues) } });
-      return;
+      return undefined;
     }
     lastRemovalAt = 0;
     set((state) => ({
@@ -318,6 +338,46 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
       dragSnapshotTaken: false,
       selectedNodeIds: [node.id],
       selectedEdgeIds: [],
+      notice: null,
+    }));
+    return node.id;
+  },
+
+  setLocalPreview: (nodeId, url) => {
+    const previous = get().localPreviews[nodeId];
+    if (previous && previous !== url) URL.revokeObjectURL(previous);
+    set((state) => ({
+      localPreviews: { ...state.localPreviews, [nodeId]: url },
+    }));
+  },
+
+  arrange: (onlyIds) => {
+    const current = get().project;
+    const chosen =
+      onlyIds && onlyIds.length > 0
+        ? current.graph.nodes.filter((node) => onlyIds.includes(node.id))
+        : current.graph.nodes;
+    if (chosen.length < 2) return;
+    const positions = arrangePositions(chosen, current.graph.edges);
+    const nodes = current.graph.nodes.map((node) => {
+      const next = positions.get(node.id);
+      return next ? { ...node, position: next } : node;
+    });
+    const next: ProjectDocument = {
+      ...current,
+      graph: { ...current.graph, nodes },
+    };
+    const parsed = validateProjectDocument(next);
+    if (!parsed.success) {
+      set({ notice: { tone: "error", text: formatIssues(parsed.issues) } });
+      return;
+    }
+    lastRemovalAt = 0;
+    set((state) => ({
+      project: parsed.data,
+      past: [...state.past, snapshot(state.project)].slice(-HISTORY_LIMIT),
+      future: [],
+      dragSnapshotTaken: false,
       notice: null,
     }));
   },
@@ -335,6 +395,7 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
       return;
     }
     lastRemovalAt = 0;
+    for (const url of Object.values(get().localPreviews)) URL.revokeObjectURL(url);
     set((state) => ({
       project: parsed.data,
       past: [...state.past, snapshot(state.project)].slice(-HISTORY_LIMIT),
@@ -343,6 +404,7 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
       selectedNodeIds: [],
       selectedEdgeIds: [],
       measured: {},
+      localPreviews: {},
       notice: null,
     }));
   },
@@ -498,6 +560,7 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
         ? ` ${parsed.data.assets.entries.length} 个素材引用未加载（浏览器不读取 ${parsed.data.assets.directory}）。`
         : "";
     lastRemovalAt = 0;
+    for (const url of Object.values(get().localPreviews)) URL.revokeObjectURL(url);
     set((state) => ({
       project: parsed.data,
       past: [...state.past, snapshot(state.project)].slice(-HISTORY_LIMIT),
@@ -506,6 +569,7 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
       selectedNodeIds: [],
       selectedEdgeIds: [],
       measured: {},
+      localPreviews: {},
       notice: { tone: "info", text: `已打开 ${parsed.data.graph.name}。${assetNote}` },
     }));
   },

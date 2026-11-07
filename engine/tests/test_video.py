@@ -13,7 +13,7 @@ from fastapi.testclient import TestClient
 
 from app.adapters.transport import HttpResult, RunCancelled
 from app.main import create_app
-from app.version import read_version
+from app.version import GRAPH_DOCUMENT_VERSION
 from tests.support import (
     MP4_BYTES,
     PNG_BYTES,
@@ -27,7 +27,7 @@ from tests.support import (
     wait_run,
 )
 
-VERSION = read_version()
+VERSION = GRAPH_DOCUMENT_VERSION
 WAN = "https://wan.example.test/api/v1"
 KLING = "https://kling.example.test"
 WAN_KEY = "wk-test-value"

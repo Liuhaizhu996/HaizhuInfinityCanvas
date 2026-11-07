@@ -17,5 +17,5 @@
     "lib": "@haizhu/ui/lib/utils",
     "hooks": "@/hooks"
   },
-  "iconLibrary": "lucide"
+  "iconLibrary": "phosphor"
 }
